@@ -1,0 +1,324 @@
+:host {
+  display: block;
+  width: 100%;
+}
+
+.history-content {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Telemetry & Sub-Nav Bar */
+.telemetry-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  background-color: #dfd5be;
+  border: 1px solid #7c766b;
+  padding: 0.6rem 1rem;
+  font-family: 'Courier Prime', monospace;
+  font-size: 0.82rem;
+  box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.telemetry-info {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.item-label {
+  font-weight: 700;
+  color: #121212;
+}
+
+.telemetry-divider {
+  color: #8c8577;
+}
+
+.status-armed {
+  font-weight: 700;
+  color: #276b3d;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+
+  .status-pip {
+    font-size: 0.7rem;
+  }
+}
+
+.bureau-sub-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+
+  .nav-link {
+    font-family: 'Courier Prime', monospace;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #333d45;
+    text-decoration: none;
+
+    &.active {
+      color: #111;
+      background-color: #ece3cd;
+      padding: 0.15rem 0.4rem;
+      border: 1px solid #7c766b;
+    }
+
+    &:hover:not(.active) {
+      color: #ba2d27;
+      text-decoration: underline;
+    }
+  }
+
+  .active-frequency-link {
+    color: #ba2d27 !important;
+    font-weight: 700;
+  }
+}
+
+/* Section Title */
+.section-banner {
+  .section-title {
+    font-family: 'Oswald', sans-serif;
+    font-size: 1.35rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    color: #121212;
+    text-transform: uppercase;
+  }
+
+  .section-sub {
+    font-family: 'Courier Prime', monospace;
+    font-size: 0.82rem;
+    color: #3f474a;
+    margin-top: 0.2rem;
+    line-height: 1.4;
+  }
+}
+
+/* Ledger Book Container */
+.ledger-container {
+  width: 100%;
+  background-color: #f7f1e1;
+  border: 2px solid #333d45;
+  box-shadow: 
+    4px 4px 0px rgba(0, 0, 0, 0.25),
+    8px 8px 12px rgba(0, 0, 0, 0.15);
+  padding: 1.5rem;
+}
+
+.ledger-book {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.ledger-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  border-bottom: 2px solid #8e8a7f;
+  padding-bottom: 0.75rem;
+  font-family: 'Courier Prime', monospace;
+
+  .ledger-vol-tag {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #121212;
+    letter-spacing: 0.05em;
+  }
+
+  .ledger-seal-mark {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #ba2d27;
+    letter-spacing: 0.08em;
+  }
+}
+
+.ledger-loading,
+.ledger-empty {
+  padding: 3rem 1.5rem;
+  text-align: center;
+  font-family: 'Courier Prime', monospace;
+}
+
+.ledger-loading {
+  color: #555;
+  font-size: 0.9rem;
+}
+
+.typewriter-blink {
+  animation: typewriterPulse 1.5s infinite;
+}
+
+@keyframes typewriterPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.ledger-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+
+  .empty-title {
+    font-family: 'Oswald', sans-serif;
+    font-size: 1.25rem;
+    color: #121212;
+    font-weight: 700;
+  }
+
+  .empty-sub {
+    font-size: 0.85rem;
+    color: #555;
+  }
+
+  .dymo-mini-btn {
+    margin-top: 0.5rem;
+    background-color: #ba2d27;
+    color: #fff;
+    padding: 0.5rem 1rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-decoration: none;
+    box-shadow: 2px 2px 0px #000;
+
+    &:hover {
+      background-color: #9c231e;
+    }
+  }
+}
+
+/* Table Scroll Wrapper */
+.table-scroll-wrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.ledger-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: 'Courier Prime', monospace;
+  text-align: left;
+
+  thead tr {
+    background-color: #dfd5be;
+    border-bottom: 2px solid #555;
+  }
+
+  th {
+    padding: 0.75rem 1rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #121212;
+    letter-spacing: 0.05em;
+    border-right: 1px solid #7c766b;
+
+    &:last-child {
+      border-right: none;
+    }
+  }
+
+  td {
+    padding: 0.85rem 1rem;
+    font-size: 0.85rem;
+    border-bottom: 1px dashed #a8a295;
+    border-right: 1px solid #dfd5be;
+    vertical-align: middle;
+
+    &:last-child {
+      border-right: none;
+    }
+  }
+
+  .col-seq {
+    width: 60px;
+    text-align: center;
+    color: #666;
+    font-weight: 700;
+  }
+
+  .col-date {
+    width: 220px;
+    color: #333d45;
+    font-size: 0.8rem;
+    white-space: nowrap;
+  }
+
+  .col-name {
+    .mission-name-bold {
+      font-family: 'Oswald', sans-serif;
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #111;
+      letter-spacing: 0.04em;
+    }
+  }
+
+  .col-outcome {
+    width: 260px;
+    white-space: nowrap;
+  }
+}
+
+/* Grease pencil highlight row hover */
+.ledger-row {
+  transition: background-color 0.1s ease;
+
+  &:hover {
+    background-color: #fff8d6;
+  }
+}
+
+/* Rubber Stamp Outcome Pills */
+.rubber-stamp-pill {
+  display: inline-block;
+  padding: 0.25rem 0.65rem;
+  font-family: 'Courier Prime', monospace;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  border: 1px solid;
+  transform: rotate(-0.5deg);
+}
+
+.stamp-success {
+  color: #276b3d;
+  border-color: #276b3d;
+  background-color: rgba(39, 107, 61, 0.08);
+}
+
+.stamp-failure {
+  color: #ba2d27;
+  border-color: #ba2d27;
+  background-color: rgba(186, 45, 39, 0.08);
+}
+
+.stamp-active {
+  color: #e07a2c;
+  border-color: #e07a2c;
+  background-color: rgba(224, 122, 44, 0.08);
+}
+
+.ledger-footer-note {
+  border-top: 1px solid #8e8a7f;
+  padding-top: 0.75rem;
+  font-family: 'Courier Prime', monospace;
+  font-size: 0.7rem;
+  color: #666;
+  text-align: right;
+  letter-spacing: 0.04em;
+}
+

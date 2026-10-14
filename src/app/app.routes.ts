@@ -26,6 +26,13 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'history',
+    loadComponent: () =>
+      import('./pages/mission-history/mission-history').then(
+        (m) => m.MissionHistoryComponent
+      ),
+  },
+  {
     path: '**',
     redirectTo: '',
   },

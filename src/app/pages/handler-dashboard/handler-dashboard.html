@@ -16,6 +16,12 @@
         <span class="nixie-digits">{{ missionClock() }}</span>
       </div>
 
+      <!-- Bureau Sub Nav: Requisition & Archives -->
+      <nav class="dashboard-nav-links">
+        <a routerLink="/missions" class="dashboard-link">[ MISSION LIST ]</a>
+        <a routerLink="/history" class="dashboard-link">[ ARCHIVES (HISTORY) ]</a>
+      </nav>
+
       <!-- Abort Switch -->
       <a routerLink="/missions" class="abort-switch" title="Emergency sever frequency" (click)="endMission()">
         <span class="switch-lever">■ END MISSION</span>

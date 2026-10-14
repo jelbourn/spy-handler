@@ -101,6 +101,26 @@
   }
 }
 
+.dashboard-nav-links {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+
+  .dashboard-link {
+    font-family: 'Courier Prime', monospace;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #333d45;
+    text-decoration: none;
+    padding: 0.2rem 0.4rem;
+
+    &:hover {
+      color: #ba2d27;
+      text-decoration: underline;
+    }
+  }
+}
+
 .abort-switch {
   display: inline-flex;
   flex-direction: column;

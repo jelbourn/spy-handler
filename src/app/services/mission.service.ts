@@ -80,10 +80,15 @@ export class MissionService {
 
   /** Finds the user's session that hasn't ended, if any. */
   async loadActiveSession(userId: number): Promise<void> {
-    const sessions = await firstValueFrom(
+    const sessions = await this.loadUserSessions(userId);
+    this.activeSession.set(sessions.find((session) => session.endTime === null) ?? null);
+  }
+
+  /** Loads all sessions for a user, newest first. */
+  async loadUserSessions(userId: number): Promise<GameSession[]> {
+    return firstValueFrom(
       this.http.get<GameSession[]>(`/api/users/${userId}/sessions`),
     );
-    this.activeSession.set(sessions.find((session) => session.endTime === null) ?? null);
   }
 
   selectMission(id: number): void {

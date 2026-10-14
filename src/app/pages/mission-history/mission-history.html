@@ -1,0 +1,94 @@
+<div class="history-content">
+  <!-- Handler Telemetry & Navigation Bar -->
+  <header class="telemetry-bar">
+    <div class="telemetry-info">
+      <span class="telemetry-item">
+        <strong class="item-label">HANDLER:</strong> {{ handlerCodename() }}
+      </span>
+      <span class="telemetry-divider">|</span>
+      <span class="telemetry-item">
+        <strong class="item-label">DIVISION:</strong> CENTRAL ARCHIVAL REGISTRY
+      </span>
+      <span class="telemetry-divider">|</span>
+      <span class="telemetry-item status-armed">
+        <span class="status-pip">■</span> ARCHIVES SECURE
+      </span>
+    </div>
+
+    <nav class="bureau-sub-nav">
+      <a routerLink="/missions" class="nav-link">[ REQUISITION (NEW) ]</a>
+      @if (isRunning()) {
+      <a routerLink="/active-mission" class="nav-link active-frequency-link">[ ACTIVE WAR ROOM ]</a>
+      }
+      <span class="nav-link active">[ ARCHIVES (HISTORY) ]</span>
+    </nav>
+  </header>
+
+  <!-- Section Title Banner -->
+  <div class="section-banner">
+    <h2 class="section-title">CENTRAL ARCHIVES // DECLASSIFIED INCIDENT LOG</h2>
+    <p class="section-sub">
+      FORM OMB-99: MASTER REGISTRY OF COVERT ENGAGEMENTS. Chronological record of completed and aborted field operations.
+    </p>
+  </div>
+
+  <!-- The Hardbound Archival Ledger Book -->
+  <div class="ledger-container">
+    <div class="ledger-book">
+      <!-- Ledger Top Stamp -->
+      <div class="ledger-header">
+        <span class="ledger-vol-tag">VOLUME IV // CLASSIFIED OPERATIONS REGISTRY</span>
+        <span class="ledger-seal-mark">ARCHIVAL DIVISION ★ RATIFIED</span>
+      </div>
+
+      <!-- Ledger Table -->
+      @if (isLoading()) {
+      <div class="ledger-loading">
+        <span class="typewriter-blink">RETRIEVING ARCHIVAL DOSSIERS FROM VAULT...</span>
+      </div>
+      } @else if (historyEntries().length === 0) {
+      <div class="ledger-empty">
+        <p class="empty-title">NO PRIOR MISSIONS FILED</p>
+        <p class="empty-sub">Your personnel docket currently holds zero completed covert engagements.</p>
+        <a routerLink="/missions" class="dymo-mini-btn">[ REQUISITION FIRST OPERATION ]</a>
+      </div>
+      } @else {
+      <div class="table-scroll-wrapper">
+        <table class="ledger-table">
+          <thead>
+            <tr>
+              <th scope="col" class="col-seq">NO.</th>
+              <th scope="col" class="col-date">DATE ATTEMPTED</th>
+              <th scope="col" class="col-name">OPERATION CODENAME</th>
+              <th scope="col" class="col-outcome">OUTCOME RULING</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (entry of historyEntries(); track entry.session.id; let idx = $index) {
+            <tr class="ledger-row">
+              <td class="col-seq">{{ idx + 1 }}</td>
+              <td class="col-date">{{ entry.formattedDate }}</td>
+              <td class="col-name">
+                <span class="mission-name-bold">{{ entry.missionName }}</span>
+              </td>
+              <td class="col-outcome">
+                <span class="rubber-stamp-pill" [class.stamp-success]="entry.outcomeClass === 'success'"
+                  [class.stamp-failure]="entry.outcomeClass === 'failure'"
+                  [class.stamp-active]="entry.outcomeClass === 'in-progress'">
+                  {{ entry.outcomeLabel }}
+                </span>
+              </td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      }
+
+      <div class="ledger-footer-note">
+        <span>AUTHENTICATED BY DIRECTORATE OF PLANS // RECORD RETENTION MANDATE 62-C</span>
+      </div>
+    </div>
+  </div>
+</div>
+
