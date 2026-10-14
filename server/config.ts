@@ -6,4 +6,11 @@ function env(name: string): string | undefined {
 
 export const config = {
   port: Number(env('PORT') ?? 3000),
+
+  elevenLabs: {
+    /** Secret for verifying post-call webhooks. */
+    webhookSecret: env('ELEVENLABS_WEBHOOK_SECRET'),
+    /** Shared secret the agent's server tools send in the `X-Tool-Secret` header. */
+    toolSecret: env('ELEVENLABS_TOOL_SECRET'),
+  },
 };
