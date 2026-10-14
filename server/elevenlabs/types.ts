@@ -54,26 +54,24 @@ export interface TranscriptTurn {
   message: string | null;
 }
 
+/** Sent after a call that connected, once ElevenLabs has analyzed it. */
+export interface PostCallTranscription {
+  agent_id: string;
+  conversation_id: string;
+  status: 'done';
+  transcript: TranscriptTurn[];
+  analysis: { transcript_summary: string };
+  conversation_initiation_client_data: { dynamic_variables: OperativeCallVariables };
+}
+
+/** Sent when an outbound call couldn't connect. */
+export interface CallInitiationFailure {
+  agent_id: string;
+  conversation_id: string;
+  failure_reason: 'busy' | 'no-answer' | 'unknown';
+}
+
 /** Post-call webhook events, signed with the workspace webhook secret. */
 export type WebhookEvent =
-  | {
-      type: 'post_call_transcription';
-      event_timestamp: number;
-      data: {
-        agent_id: string;
-        conversation_id: string;
-        status: 'done';
-        transcript: TranscriptTurn[];
-        analysis: { transcript_summary: string };
-        conversation_initiation_client_data: { dynamic_variables: OperativeCallVariables };
-      };
-    }
-  | {
-      type: 'call_initiation_failure';
-      event_timestamp: number;
-      data: {
-        agent_id: string;
-        conversation_id: string;
-        failure_reason: 'busy' | 'no-answer' | 'unknown';
-      };
-    };
+  | { type: 'post_call_transcription'; event_timestamp: number; data: PostCallTranscription }
+  | { type: 'call_initiation_failure'; event_timestamp: number; data: CallInitiationFailure };

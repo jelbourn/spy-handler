@@ -1,23 +1,13 @@
 import { Hono } from 'hono';
-import { notImplemented } from './not-implemented.ts';
+import { handlePostCallWebhook } from './post-call-webhook.ts';
+import { receiveSms, verifyTwilioSignature } from './sms.ts';
+import { submitDecision, verifyToolSecret } from './submit-decision.ts';
 
 /** Endpoints ElevenLabs and Twilio call. They need `PUBLIC_URL` to be reachable from outside. */
 export const webhooks = new Hono();
 
-/**
- * The agent's `submit_decision` server tool, called once the player picks an order. Rolls the
- * challenge and advances the operative, but the agent isn't told the result.
- *
- * Responds 401 for a bad `X-Tool-Secret`. Game errors are 200 with `{error}`, so the agent can relay
- * them to the player.
- */
-webhooks.post('/elevenlabs/tools/submit-decision', notImplemented);
+webhooks.post('/elevenlabs/tools/submit-decision', verifyToolSecret, submitDecision);
 
-/**
- * ElevenLabs post-call webhook: a transcript after a call, or a call initiation failure. Must
- * respond 200, or ElevenLabs counts the delivery as failed. Responds 401 for a bad signature.
- */
-webhooks.post('/elevenlabs/webhooks', notImplemented);
+webhooks.post('/elevenlabs/webhooks', handlePostCallWebhook);
 
-/** Inbound SMS from the player, answered with TwiML. Responds 403 for a bad Twilio signature. */
-webhooks.post('/twilio/sms', notImplemented);
+webhooks.post('/twilio/sms', verifyTwilioSignature, receiveSms);
