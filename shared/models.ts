@@ -179,6 +179,12 @@ export interface GameSessionDetail extends GameSession {
   operatives: { dossier: Dossier; npcSession: NpcSession }[];
 }
 
+export interface CreateUserRequest {
+  username: string;
+  /** E.164 format, e.g. +15555550100. */
+  phoneNumber: string;
+}
+
 export interface CreateGameSessionRequest {
   userId: number;
   gameTemplateId: number;

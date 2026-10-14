@@ -8,6 +8,17 @@ function notImplemented(c: Context) {
   return c.json({ error: `${c.req.method} ${c.req.path} is not implemented yet` }, 501);
 }
 
+/**
+ * Creates a user from a `CreateUserRequest`. Responds 201 with the `User`.
+ *
+ * Errors: 400 for a bad body or a phone number that isn't E.164, and 409 if the username or phone
+ * number is taken.
+ */
+gameService.post('/users', (c) => notImplemented(c));
+
+/** Lists a user's game sessions as `GameSession[]`, newest first. Responds 404 for an unknown user. */
+gameService.get('/users/:userId/sessions', (c) => notImplemented(c));
+
 /** Lists all game sessions as `GameSession[]`, newest first. */
 gameService.get('/sessions', (c) => notImplemented(c));
 
