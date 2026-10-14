@@ -31,7 +31,12 @@ export async function startSession(c: Context) {
     if (!tx.select().from(users).where(eq(users.id, userId!)).get()) {
       return { error: `User ${userId} not found`, status: 404 } as const;
     }
-    if (!tx.select().from(gameTemplates).where(eq(gameTemplates.id, gameTemplateId!)).get()) {
+    const template = tx
+      .select()
+      .from(gameTemplates)
+      .where(eq(gameTemplates.id, gameTemplateId!))
+      .get();
+    if (!template) {
       return { error: `Game template ${gameTemplateId} not found`, status: 404 } as const;
     }
     const active = tx
@@ -51,6 +56,7 @@ export async function startSession(c: Context) {
         gameTemplateId: gameTemplateId!,
         startTime: new Date(now).toISOString(),
         nextCallTime: new Date(now + FIRST_CALL_DELAY_MS).toISOString(),
+        decisionNodeId: template.decisionTree.startNodeId,
       })
       .returning()
       .get();
@@ -65,7 +71,6 @@ export async function startSession(c: Context) {
           npcs.map((npc) => ({
             gameSessionId: session.id,
             npcTemplateId: npc.id,
-            decisionNodeId: npc.decisionTree.startNodeId,
           })),
         )
         .run();

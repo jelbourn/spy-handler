@@ -1,20 +1,18 @@
-import { validateOperative } from '../game/decision-tree.ts';
+import { validateScenario } from '../game/decision-tree.ts';
 import { scenarios } from '../scenarios/index.ts';
 import { db } from './index.ts';
 import { gameTemplates, npcTemplates, users } from './schema.ts';
 
-// Inserts the scenarios and a demo user. Run via `npm run db:reset`, which starts from an empty
+// Inserts the scenarios and the players. Run via `npm run db:reset`, which starts from an empty
 // database.
-for (const { npcs } of scenarios) {
-  npcs.forEach(validateOperative);
-}
+scenarios.forEach(validateScenario);
 
 db.transaction((tx) => {
   tx.insert(users)
-    .values({
-      username: 'handler',
-      phoneNumber: process.env['SEED_PHONE_NUMBER'] || '+15555550100',
-    })
+    .values([
+      { username: 'jeremy', handle: 'Breakfast Club', phoneNumber: '+13868432817' },
+      { username: 'mark', handle: 'Ghost Ears', phoneNumber: '+17739726275' },
+    ])
     .run();
 
   for (const { npcs, ...game } of scenarios) {

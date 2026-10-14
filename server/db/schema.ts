@@ -4,6 +4,7 @@ import type * as models from '../../shared/models.ts';
 export const users = sqliteTable('users', {
   id: integer().primaryKey({ autoIncrement: true }),
   username: text().notNull().unique(),
+  handle: text().notNull(),
   phoneNumber: text().notNull().unique(),
 });
 
@@ -12,6 +13,8 @@ export const gameTemplates = sqliteTable('game_templates', {
   title: text().notNull(),
   scenario: text().notNull(),
   agentId: text(),
+  allowedFailures: integer().notNull().default(0),
+  decisionTree: text({ mode: 'json' }).$type<models.DecisionTree>().notNull(),
 });
 
 export const npcTemplates = sqliteTable('npc_templates', {
@@ -23,7 +26,6 @@ export const npcTemplates = sqliteTable('npc_templates', {
   persona: text().notNull(),
   voiceId: text(),
   stats: text({ mode: 'json' }).$type<models.Stats>().notNull(),
-  decisionTree: text({ mode: 'json' }).$type<models.DecisionTree>().notNull(),
 });
 
 export const gameSessions = sqliteTable('game_sessions', {
@@ -38,6 +40,8 @@ export const gameSessions = sqliteTable('game_sessions', {
   endTime: text(),
   status: text().$type<models.SessionStatus>().notNull().default('in-progress'),
   nextCallTime: text(),
+  decisionNodeId: text().notNull(),
+  failureCount: integer().notNull().default(0),
 });
 
 export const npcSessions = sqliteTable('npc_sessions', {
@@ -48,10 +52,8 @@ export const npcSessions = sqliteTable('npc_sessions', {
   npcTemplateId: integer()
     .notNull()
     .references(() => npcTemplates.id),
-  decisionNodeId: text().notNull(),
   callCount: integer().notNull().default(0),
   lastCommsTime: text(),
-  status: text().$type<models.SessionStatus>().notNull().default('in-progress'),
 });
 
 export const npcCalls = sqliteTable('npc_calls', {

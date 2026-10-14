@@ -13,11 +13,14 @@ const E164 = /^\+[1-9]\d{1,14}$/;
  * number is taken.
  */
 export async function createUser(c: Context) {
-  const { username, phoneNumber } = await c.req
+  const { username, handle, phoneNumber } = await c.req
     .json<Partial<CreateUserRequest>>()
     .catch((): Partial<CreateUserRequest> => ({}));
   if (typeof username !== 'string' || !username.trim()) {
     return c.json({ error: 'username is required' }, 400);
+  }
+  if (typeof handle !== 'string' || !handle.trim()) {
+    return c.json({ error: 'handle is required' }, 400);
   }
   if (typeof phoneNumber !== 'string' || !E164.test(phoneNumber)) {
     return c.json({ error: 'phoneNumber must be E.164, e.g. +15555550100' }, 400);
@@ -33,7 +36,7 @@ export async function createUser(c: Context) {
     return c.json({ error: `${field} is already taken` }, 409);
   }
 
-  const user = db.insert(users).values({ username, phoneNumber }).returning().get();
+  const user = db.insert(users).values({ username, handle, phoneNumber }).returning().get();
   return c.json(user, 201);
 }
 

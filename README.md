@@ -39,9 +39,6 @@ npm start         # Angular on :4200 (proxies /api to :3000) + API server on :30
   ELEVENLABS_PHONE_NUMBER_ID=
   ELEVENLABS_WEBHOOK_SECRET=
   ELEVENLABS_TOOL_SECRET=
-
-  # Phone number for the seeded demo user, so operatives call/text you
-  SEED_PHONE_NUMBER=
   ```
 - After editing `server/db/schema.ts` (and `shared/models.ts`, which must match it), run
   `npm run db:reset`. This wipes all data. Stop the server first, since it holds a lock on the
@@ -63,23 +60,24 @@ agent through a Twilio number imported into ElevenLabs:
 2. When `nextCallTime` passes, the scheduler (not built yet) places a call for the operative
    `pickNextCaller` picks (`server/game/turn-order.ts`): a random one among those who have called
    the fewest times. So the player hears from every operative before anyone calls again, in a
-   different order each round. Every operative is played by the game's agent
-   (`GameTemplate.agentId`); each call switches to the operative's `voiceId` and passes the current
-   decision tree node as dynamic variables.
+   different order each round. The caller takes the mission's current node
+   (`GameSession.decisionNodeId`). Every operative is played by the game's agent
+   (`GameTemplate.agentId`); each call switches to the operative's `voiceId` and passes the node
+   as dynamic variables.
 3. During the call, the agent calls the `submit_decision` tool once the player picks a challenge.
-   The operative rolls 1 to 100 against the challenge's stat (success if the roll is at most the
-   stat), the roll is saved on the call, and the operative moves to the node's success or failure
-   child. The agent isn't told the result; the next call's briefing reveals it. Only one order is
-   accepted per call, and the server hangs up through Twilio 10 seconds later (after the agent
-   acknowledges), in case the agent doesn't end the call itself.
+   The calling operative rolls 1 to 100 against their own stat for that challenge (success if the
+   roll is at most the stat), the roll is saved on the call, and the mission moves to the node's
+   success or failure child. The agent isn't told the result; the next call's briefing reveals it.
+   Only one order is accepted per call, and the server hangs up through Twilio 10 seconds later
+   (after the agent acknowledges), in case the agent doesn't end the call itself.
 4. After the call, the post-call webhook stores the summary and transcript. Every call about a
    choice node ends with a decision: if the player gave no order (a missed call, or no clear
    decision), the operative picks one of the two challenges by coin toss and rolls for it.
-5. Once an operative reaches an ending, their next turn is a call reporting how it went. When that
-   call ends (answered or not), the operative's `status` becomes the ending's `result` and they
-   stop calling.
-6. The game session fails as soon as any operative fails, and succeeds once every operative has
-   succeeded. Either way it ends, and the remaining operatives stop calling.
+5. Every failed roll, coin tosses included, adds to the session's `failureCount`. The game is lost
+   as soon as it passes the template's `allowedFailures`.
+6. Reaching an ending node means the mission made it through. The next operative to call reports
+   it, and when that call ends (answered or not), the game is won. Either way, once the game ends
+   the operatives stop calling.
 
 ### Stats and decision trees
 
@@ -90,34 +88,37 @@ session page:
 - **Charm**: impersonation, persuasion, romancing
 - **Muscle**: fighting, lifting, climbing, jumping, swimming
 
-Each operative's storyline is a `DecisionTree` (see `shared/models.ts`), stored as JSON on
-`NpcTemplate`. Scenarios are written in `server/scenarios/` (listed in `index.ts`), and each
-operative is checked by `validateOperative` when seeding.
+The mission's storyline is a single `DecisionTree` (see `shared/models.ts`), shared by the whole
+team and stored as JSON on `GameTemplate`. Any operative can end up handling any node, so
+situations are addressed to whoever is calling. Scenarios are written in `server/scenarios/`
+(listed in `index.ts`) and checked by `validateScenario` when seeding.
 
-- A tree has a `startNodeId` and a map of nodes keyed by readable IDs (`'captains-office'`).
+- A tree has a `startNodeId` and a map of nodes keyed by readable IDs (`'office-door'`).
 - A **choice** node has a `situation` (a briefing the agent explains in character), exactly two
   `choices`, each a challenge testing a different stat, and `onSuccess`/`onFailure` child nodes.
   The player's pick only sets the odds: either challenge leads to the same two children.
+- `onFailure` is left out exactly where failing would pass `allowedFailures`, since the game ends
+  there, so no unreachable content gets written. Seeding checks this.
 - A challenge has an `id`, a `description` and its `stat`. The player is never told the stat:
   the description has to imply it through the action (sneaking, talking, climbing...), so it must
   not name the stat. Neither should the `id`, which the agent also sees.
 - The tree is strict: every node except the start has exactly one parent outcome. So each
-  situation starts by saying whether the previous attempt succeeded or failed, and what happens
-  next builds on that. It shouldn't say which challenge was picked, since either could have been.
-- An **ending** node has a `situation` the operative reports and a `result`, either `success` or
-  `failure`.
-- How many decisions an operative faces before an ending is up to the scenario.
+  situation starts by saying whether the team's previous attempt succeeded or failed, and what
+  happens next builds on that. It shouldn't say which challenge was picked, since either could
+  have been.
+- An **ending** node has a `situation` the reporting operative tells the player.
+- How many decisions the mission has is up to the scenario.
 
-The example scenario, `captain-hanks.ts` ("Operation Golden Grill"), has three operatives
-infiltrating Captain Hanks's supply chain to steal the Tandori Halloumi recipe, with two decisions
-each: the first decides whether they get in cleanly or have to recover, and the second whether they
-get what they came for. Each is strong in one stat and weak in another:
+The example scenario, `captain-hanks.ts` ("Operation Golden Grill"), has the team working along
+Captain Hanks's supply chain in Portland (spice supplier, delivery fleet, then test kitchen) to
+steal the Tandori Halloumi recipe. It has four decisions and allows one failure. Each operative is
+strong in one stat and weak in another, so the best order depends on who's calling:
 
-| Operative | Target                        | Stealth | Charm | Muscle |
-|-----------|-------------------------------|---------|-------|--------|
-| Juniper   | Spice supplier (masala blend) | 35      | 85    | 20     |
-| Bishop    | Delivery fleet (marinade)     | 30      | 45    | 80     |
-| Moss      | Test kitchen (recipe binder)  | 85      | 25    | 55     |
+| Operative | Stealth | Charm | Muscle |
+|-----------|---------|-------|--------|
+| Juniper   | 35      | 85    | 20     |
+| Bishop    | 30      | 45    | 80     |
+| Moss      | 85      | 25    | 55     |
 
 ### ElevenLabs setup
 
@@ -133,7 +134,7 @@ and voice IDs aren't secret: they're checked in as the scenario's `agentId` and 
    dynamic variables the server sends: `{{npc_name}}`, `{{persona}}`, `{{scenario}}`,
    `{{situation}}` and `{{choices}}` (one `- id: description` per line).
    `{{npc_session_id}}` and `{{npc_call_id}}` are also sent, for the tool. When `{{choices}}` is
-   empty, the storyline has ended: the prompt should tell the agent to report `{{situation}}` and
+   empty, the mission has ended: the prompt should tell the agent to report `{{situation}}` and
    hang up.
 3. In the agent's **Settings**, under **Security**, enable the overrides for **voice**, **speed** and
    **first message**, then publish.
@@ -156,14 +157,17 @@ as ISO-8601 strings. GameTemplate and NpcTemplate rows are seeded from `server/s
 |-------------|--------|-------------------------------------------------------------|
 | id          | int    |                                                             |
 | username    | string | unique                                                      |
+| handle      | string |                                                             |
 | phoneNumber | string | unique; E.164 (`+15555550100`). Operatives call this number |
 
-| GameTemplate |        |                                                                                                |
-|--------------|--------|------------------------------------------------------------------------------------------------|
-| id           | int    |                                                                                                |
-| title        | string |                                                                                                |
-| scenario     | string | Mission briefing; sent to the agent as `{{scenario}}`                                          |
-| agentId      | string | nullable; the ElevenLabs agent that plays every operative. Null = calls are logged, not placed |
+| GameTemplate    |        |                                                                                                |
+|-----------------|--------|------------------------------------------------------------------------------------------------|
+| id              | int    |                                                                                                |
+| title           | string |                                                                                                |
+| scenario        | string | Mission briefing; sent to the agent as `{{scenario}}`                                          |
+| agentId         | string | nullable; the ElevenLabs agent that plays every operative. Null = calls are logged, not placed |
+| allowedFailures | int    | Default 0. How many failed rolls the team can afford: the game is lost on the next one         |
+| decisionTree    | json   | The mission's `DecisionTree`; see "Stats and decision trees"                                   |
 
 | NpcTemplate    |        |                                                                                                                     |
 |----------------|--------|---------------------------------------------------------------------------------------------------------------------|
@@ -172,28 +176,27 @@ as ISO-8601 strings. GameTemplate and NpcTemplate rows are seeded from `server/s
 | name           | string | Sent to the agent as `{{npc_name}}`; shown in the dossier                                                           |
 | persona        | string | How the operative talks; sent as `{{persona}}` and shown as the dossier bio                                         |
 | voiceId        | string | nullable; ElevenLabs voice ID, overriding the agent's voice on this operative's calls. Null = the agent's own voice |
-| stats          | json   | `{stealth, charm, muscle}`, each 1 to 100; shown in the dossier                                                     |
-| decisionTree   | json   | `DecisionTree`; see "Stats and decision trees"                                                                      |
+| stats          | json   | `{stealth, charm, muscle}`, each 1 to 100; shown in the dossier. Sets the odds on their calls                       |
 
-| GameSession    |          |                                                                                                                             |
-|----------------|----------|-----------------------------------------------------------------------------------------------------------------------------|
-| id             | int      |                                                                                                                             |
-| userId         | int      | → User                                                                                                                      |
-| gameTemplateId | int      | → GameTemplate                                                                                                              |
-| startTime      | datetime |                                                                                                                             |
-| endTime        | datetime | nullable; null = active. A user has at most one active session                                                              |
-| status         | string   | `in-progress`, `success` or `failure`. Fails when any operative fails; succeeds when all succeed. Ending early is a failure |
-| nextCallTime   | datetime | nullable; when the next operative calls. Null during a call and once the session has ended                                  |
+| GameSession    |          |                                                                                                                                                            |
+|----------------|----------|------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| id             | int      |                                                                                                                                                            |
+| userId         | int      | → User                                                                                                                                                     |
+| gameTemplateId | int      | → GameTemplate                                                                                                                                             |
+| startTime      | datetime |                                                                                                                                                            |
+| endTime        | datetime | nullable; null = active. A user has at most one active session                                                                                             |
+| status         | string   | `in-progress`, `success` or `failure`. Fails once `failureCount` passes `allowedFailures`; succeeds once the ending is reported. Ending early is a failure |
+| nextCallTime   | datetime | nullable; when the next operative calls. Null during a call and once the session has ended                                                                 |
+| decisionNodeId | string   | The mission's current node in the template's decision tree; starts at its `startNodeId`                                                                    |
+| failureCount   | int      | Default 0. Failed rolls so far, coin tosses included                                                                                                       |
 
-| NpcSession     |          |                                                                                                |
-|----------------|----------|------------------------------------------------------------------------------------------------|
-| id             | int      |                                                                                                |
-| gameSessionId  | int      | → GameSession                                                                                  |
-| npcTemplateId  | int      | → NpcTemplate                                                                                  |
-| decisionNodeId | string   | Current node in the decision tree; starts at its `startNodeId`                                 |
-| callCount      | int      | Default 0. Calls made so far; the next caller has the fewest, so everyone calls once per round |
-| lastCommsTime  | datetime | nullable; when the handler last picked a challenge                                             |
-| status         | string   | `in-progress`, `success` or `failure`; set to the ending's result once it's reported           |
+| NpcSession    |          |                                                                                                |
+|---------------|----------|------------------------------------------------------------------------------------------------|
+| id            | int      |                                                                                                |
+| gameSessionId | int      | → GameSession                                                                                  |
+| npcTemplateId | int      | → NpcTemplate                                                                                  |
+| callCount     | int      | Default 0. Calls made so far; the next caller has the fewest, so everyone calls once per round |
+| lastCommsTime | datetime | nullable; when the handler last picked a challenge on this operative's call                    |
 
 | NpcCall        |          |                                                                                                                                                                                                                  |
 |----------------|----------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -211,15 +214,15 @@ as ISO-8601 strings. GameTemplate and NpcTemplate rows are seeded from `server/s
 
 ## API
 
-| GameService |                             |                          |                                                                                                                                                      |
-|-------------|-----------------------------|--------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------|
-| POST        | /api/users                  | {username, phoneNumber}  | 201 with the user. 400 bad body or non-E.164 phone number, 409 username or phone number taken                                                        |
-| GET         | /api/users/:id/sessions     |                          | The user's sessions, newest first. 404 unknown user                                                                                                  |
-| GET         | /api/sessions               |                          | All sessions, newest first                                                                                                                           |
-| POST        | /api/sessions               | {userId, gameTemplateId} | 201 with the session; creates NpcSessions and schedules first calls. 400 bad body, 404 unknown user/template, 409 user already has an active session |
-| GET         | /api/sessions/:id           |                          | Session plus `operatives`: each one's `dossier` (name, bio, stats) and `npcSession`. 404 if not found                                                |
-| POST        | /api/sessions/:id/end       |                          | Abandons the session: sets `endTime` and `status: failure`. 404 if no active session with that ID                                                    |
-| GET         | /api/events                 |                          | SSE stream: `session.created`, `session.ended` (also when the session succeeds or fails), `npc.updated`, `call.updated`, plus a `ping` every 15s     |
+| GameService |                         |                                 |                                                                                                                                                      |
+|-------------|-------------------------|---------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------|
+| POST        | /api/users              | {username, handle, phoneNumber} | 201 with the user. 400 bad body or non-E.164 phone number, 409 username or phone number taken                                                        |
+| GET         | /api/users/:id/sessions |                                 | The user's sessions, newest first. 404 unknown user                                                                                                  |
+| GET         | /api/sessions           |                                 | All sessions, newest first                                                                                                                           |
+| POST        | /api/sessions           | {userId, gameTemplateId}        | 201 with the session; creates NpcSessions and schedules first calls. 400 bad body, 404 unknown user/template, 409 user already has an active session |
+| GET         | /api/sessions/:id       |                                 | Session plus `operatives`: each one's `dossier` (name, bio, stats) and `npcSession`. 404 if not found                                                |
+| POST        | /api/sessions/:id/end   |                                 | Abandons the session: sets `endTime` and `status: failure`. 404 if no active session with that ID                                                    |
+| GET         | /api/events             |                                 | SSE stream: `session.created`, `session.ended` (also when the session succeeds or fails), `npc.updated`, `call.updated`, plus a `ping` every 15s     |
 
 | Webhooks |                                   |                             |                                                                                                                                       |
 |----------|-----------------------------------|-----------------------------|---------------------------------------------------------------------------------------------------------------------------------------|

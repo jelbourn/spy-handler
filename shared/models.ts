@@ -4,6 +4,7 @@
 export interface User {
   id: number;
   username: string;
+  handle: string;
   /** E.164 format, e.g. +15555550100. Operatives call and text this number. */
   phoneNumber: string;
 }
@@ -17,6 +18,9 @@ export interface GameTemplate {
    * until the agent is set up: calls are then logged instead of placed (dry run).
    */
   agentId: string | null;
+  /** How many failed rolls the team can afford: the game is lost on the next one. */
+  allowedFailures: number;
+  decisionTree: DecisionTree;
 }
 
 export interface NpcTemplate {
@@ -31,7 +35,6 @@ export interface NpcTemplate {
   /** ElevenLabs voice for this operative, overriding the agent's. Null = the agent's own voice. */
   voiceId: string | null;
   stats: Stats;
-  decisionTree: DecisionTree;
 }
 
 /**
@@ -53,9 +56,10 @@ export interface Dossier {
 }
 
 /**
- * An operative's branching storyline. On each call the handler picks one of two challenges, which
- * only decides the odds: the operative rolls 1 to 100 against that challenge's stat, and moves to
- * the node's success or failure child either way.
+ * The mission's branching storyline, shared by the whole team. Each call, the calling operative
+ * takes the current node and the handler picks one of its two challenges, which only decides the
+ * odds: the operative rolls 1 to 100 against that challenge's stat, and the mission moves to the
+ * node's success or failure child either way.
  *
  * It's a strict tree: every node except the start is reached from exactly one parent outcome, so
  * each briefing can say how the previous attempt went.
@@ -67,19 +71,20 @@ export interface DecisionTree {
 
 export type DecisionNode = ChoiceNode | EndingNode;
 
-/** A moment where the operative needs the handler to pick a challenge. */
+/** A moment where the team needs the handler to pick a challenge. */
 export interface ChoiceNode {
   type: 'choice';
   /**
-   * Briefing for the agent, addressed to the operative ("You're in..."): whether the previous
-   * attempt succeeded or failed, what's happening now, and what they need from the handler. The
-   * agent explains it in character.
+   * Briefing for the agent, addressed to whichever operative is calling ("You're at..."): whether
+   * the team's previous attempt succeeded or failed, what's happening now, and what they need from
+   * the handler. The agent explains it in character.
    */
   situation: string;
   /** Two challenges testing different stats. */
   choices: [Challenge, Challenge];
   onSuccess: string;
-  onFailure: string;
+  /** Omitted where failing would pass the scenario's `allowedFailures`, since the game ends. */
+  onFailure?: string;
 }
 
 export interface Challenge {
@@ -94,17 +99,16 @@ export interface Challenge {
   stat: Stat;
 }
 
-/** The end of an operative's storyline. */
+/** The end of the mission. Reaching one wins the game, since too many failures would have ended it. */
 export interface EndingNode {
   type: 'ending';
-  /** What the operative reports to the handler on their final call, starting with how it went. */
+  /** What the next operative to call reports to the handler: how the mission wrapped up. */
   situation: string;
-  result: 'success' | 'failure';
 }
 
 /**
- * An operative's status settles when their ending is reported to the handler. A game session fails
- * as soon as any operative fails, and succeeds once every operative has succeeded.
+ * A game session fails as soon as its failed rolls pass `allowedFailures`, and succeeds once the
+ * mission's ending has been reported.
  */
 export type SessionStatus = 'in-progress' | 'success' | 'failure';
 
@@ -121,21 +125,23 @@ export interface GameSession {
    * call and after the session ends.
    */
   nextCallTime: string | null;
+  /** The mission's current node in the template's decision tree. */
+  decisionNodeId: string;
+  /** Failed rolls so far, including coin tosses. The game is lost once this passes `allowedFailures`. */
+  failureCount: number;
 }
 
 export interface NpcSession {
   id: number;
   gameSessionId: number;
   npcTemplateId: number;
-  decisionNodeId: string;
   /**
    * Calls this operative has made. The next caller is picked from the operatives with the fewest,
    * so everyone calls once before anyone calls again.
    */
   callCount: number;
-  /** When the player last made a decision for this operative. */
+  /** When the player last made a decision on this operative's call. */
   lastCommsTime: string | null;
-  status: SessionStatus;
 }
 
 export type NpcCallOutcome =
@@ -193,6 +199,7 @@ export interface GameSessionDetail extends GameSession {
 
 export interface CreateUserRequest {
   username: string;
+  handle: string;
   /** E.164 format, e.g. +15555550100. */
   phoneNumber: string;
 }

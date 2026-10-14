@@ -1,7 +1,7 @@
-import { and, eq, isNull } from 'drizzle-orm';
+import { and, eq, isNull, sql } from 'drizzle-orm';
 import type { GameSession } from '../../shared/models.ts';
 import { db } from '../db/index.ts';
-import { gameSessions, npcSessions } from '../db/schema.ts';
+import { gameSessions } from '../db/schema.ts';
 
 /**
  * Ends an active game session with a final status. Operatives stop calling once it has ended.
@@ -19,20 +19,12 @@ export function endGameSession(
     .get();
 }
 
-/**
- * Ends the game session if its operatives have decided it: failure as soon as any operative has
- * failed, success once all of them have succeeded.
- */
-export function resolveGameSession(gameSessionId: number): void {
-  const statuses = db
-    .select({ status: npcSessions.status })
-    .from(npcSessions)
-    .where(eq(npcSessions.gameSessionId, gameSessionId))
-    .all()
-    .map((row) => row.status);
-  if (statuses.includes('failure')) {
-    endGameSession(gameSessionId, 'failure');
-  } else if (statuses.every((status) => status === 'success')) {
-    endGameSession(gameSessionId, 'success');
-  }
+/** Adds a failed roll to the game session's `failureCount`, returning the new count. */
+export function countFailure(gameSessionId: number): number {
+  return db
+    .update(gameSessions)
+    .set({ failureCount: sql`${gameSessions.failureCount} + 1` })
+    .where(eq(gameSessions.id, gameSessionId))
+    .returning({ failureCount: gameSessions.failureCount })
+    .get()!.failureCount;
 }

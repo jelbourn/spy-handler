@@ -5,13 +5,13 @@ import type {
   NpcCall,
   NpcCallOutcome,
   NpcSession,
-  NpcTemplate,
+  Stats,
 } from '../../shared/models.ts';
 import { db } from '../db/index.ts';
-import { gameSessions, npcCalls, npcSessions, npcTemplates } from '../db/schema.ts';
+import { gameSessions, gameTemplates, npcCalls, npcSessions, npcTemplates } from '../db/schema.ts';
 import { hangUpCall } from '../twilio/client.ts';
 import { getNode, rollChallenge, tossCoin } from './decision-tree.ts';
-import { resolveGameSession } from './game-sessions.ts';
+import { countFailure, endGameSession } from './game-sessions.ts';
 
 // Placeholder pacing; tune once the game is playable.
 /** Delay before the first operative calls after a session starts. */
@@ -50,34 +50,48 @@ export function hangUpAfterDecision(call: NpcCall): void {
   }, HANG_UP_AFTER_DECISION_MS);
 }
 
+export interface ChallengeAttempt {
+  gameSessionId: number;
+  /** The operative attempting it, whose stats set the odds. */
+  npcSessionId: number;
+  stats: Stats;
+  node: ChoiceNode;
+  challengeId: string;
+  pickedBy: ChallengeRoll['pickedBy'];
+  /** The call it was decided on, which the roll is saved to. */
+  callId?: number;
+}
+
 /**
- * Rolls the picked challenge and moves the operative to the node's success or failure child. The
- * roll is saved on the call it was decided on, if any.
+ * Rolls the picked challenge and moves the mission to the node's success or failure child. A
+ * failure that passes the scenario's `allowedFailures` loses the game instead.
  */
-export function attemptChallenge(
-  npcSession: NpcSession,
-  npc: Pick<NpcTemplate, 'stats'>,
-  node: ChoiceNode,
-  challengeId: string,
-  pickedBy: ChallengeRoll['pickedBy'],
-  callId?: number,
-): ChallengeRoll {
-  const challenge = node.choices.find((choice) => choice.id === challengeId)!;
-  const decision = rollChallenge(challenge, npc.stats, pickedBy);
+export function attemptChallenge(attempt: ChallengeAttempt): ChallengeRoll {
+  const { gameSessionId, node, pickedBy, callId } = attempt;
+  const challenge = node.choices.find((choice) => choice.id === attempt.challengeId)!;
+  const decision = rollChallenge(challenge, attempt.stats, pickedBy);
   if (callId !== undefined) {
     updateCall(callId, { decision });
   }
-  updateNpcSession(npcSession.id, {
-    decisionNodeId: decision.succeeded ? node.onSuccess : node.onFailure,
-    ...(pickedBy === 'handler' ? { lastCommsTime: new Date().toISOString() } : {}),
-  });
+  if (pickedBy === 'handler') {
+    updateNpcSession(attempt.npcSessionId, { lastCommsTime: new Date().toISOString() });
+  }
+
+  if (decision.succeeded) {
+    moveMissionTo(gameSessionId, node.onSuccess);
+  } else if (countFailure(gameSessionId) > getAllowedFailures(gameSessionId)) {
+    endGameSession(gameSessionId, 'failure');
+  } else {
+    // Seeding checks that a failure branch exists wherever the team can still afford a failure.
+    moveMissionTo(gameSessionId, node.onFailure!);
+  }
   return decision;
 }
 
 /**
  * Marks a call as over and uses up the operative's turn. A call about a choice node always settles
- * it: without an order from the handler, the operative picks by coin toss. A call reporting an
- * ending settles the operative's status, which may end the game. Then the next call is scheduled.
+ * it: without an order from the handler, the operative picks by coin toss. A call reporting the
+ * ending wins the game. Otherwise the next call is scheduled.
  */
 export function finishCall(
   callId: number,
@@ -85,25 +99,42 @@ export function finishCall(
   changes: Partial<NpcCall> = {},
 ): NpcCall {
   const call = updateCall(callId, { ...changes, outcome, endTime: new Date().toISOString() });
-  const { npcSession, npc } = db
-    .select({ npcSession: npcSessions, npc: npcTemplates })
+  const { npcSession, npc, game, tree } = db
+    .select({
+      npcSession: npcSessions,
+      npc: npcTemplates,
+      game: gameSessions,
+      tree: gameTemplates.decisionTree,
+    })
     .from(npcSessions)
     .innerJoin(npcTemplates, eq(npcSessions.npcTemplateId, npcTemplates.id))
+    .innerJoin(gameSessions, eq(npcSessions.gameSessionId, gameSessions.id))
+    .innerJoin(gameTemplates, eq(gameSessions.gameTemplateId, gameTemplates.id))
     .where(eq(npcSessions.id, call.npcSessionId))
     .get()!;
   updateNpcSession(npcSession.id, { callCount: npcSession.callCount + 1 });
-
-  // Settled even if the player missed the call, so the game can't stall on an unanswered report.
-  const calledAbout = getNode(npc.decisionTree, call.nodeId);
-  if (calledAbout.type === 'ending') {
-    updateNpcSession(npcSession.id, { status: calledAbout.result });
-    resolveGameSession(npcSession.gameSessionId);
-  } else if (!call.decision) {
-    const challenge = tossCoin(calledAbout);
-    attemptChallenge(npcSession, npc, calledAbout, challenge.id, 'operative', call.id);
+  if (game.endTime) {
+    return call;
   }
 
-  scheduleNextCall(npcSession.gameSessionId, BETWEEN_CALLS_DELAY_MS);
+  // Settled even if the player missed the call, so the game can't stall on an unanswered report.
+  const calledAbout = getNode(tree, call.nodeId);
+  if (calledAbout.type === 'ending') {
+    endGameSession(game.id, 'success');
+    return call;
+  }
+  if (!call.decision) {
+    attemptChallenge({
+      gameSessionId: game.id,
+      npcSessionId: npcSession.id,
+      stats: npc.stats,
+      node: calledAbout,
+      challengeId: tossCoin(calledAbout).id,
+      pickedBy: 'operative',
+      callId: call.id,
+    });
+  }
+  scheduleNextCall(game.id, BETWEEN_CALLS_DELAY_MS);
   return call;
 }
 
@@ -113,4 +144,20 @@ export function scheduleNextCall(gameSessionId: number, delayMs: number): void {
     .set({ nextCallTime: new Date(Date.now() + delayMs).toISOString() })
     .where(and(eq(gameSessions.id, gameSessionId), isNull(gameSessions.endTime)))
     .run();
+}
+
+function moveMissionTo(gameSessionId: number, nodeId: string): void {
+  db.update(gameSessions)
+    .set({ decisionNodeId: nodeId })
+    .where(eq(gameSessions.id, gameSessionId))
+    .run();
+}
+
+function getAllowedFailures(gameSessionId: number): number {
+  return db
+    .select({ allowedFailures: gameTemplates.allowedFailures })
+    .from(gameSessions)
+    .innerJoin(gameTemplates, eq(gameSessions.gameTemplateId, gameTemplates.id))
+    .where(eq(gameSessions.id, gameSessionId))
+    .get()!.allowedFailures;
 }

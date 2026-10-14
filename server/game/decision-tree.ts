@@ -40,25 +40,42 @@ export function tossCoin(node: ChoiceNode): Challenge {
 }
 
 /**
- * Checks an operative for authoring mistakes, throwing with every problem found. Their tree must be
- * a strict tree, so each briefing can rely on how the previous attempt went.
+ * Checks a scenario for authoring mistakes, throwing with every problem found. The tree must be a
+ * strict tree, so each briefing can rely on how the previous attempt went. A failure branch must
+ * exist exactly when it's reachable: when failing there wouldn't pass `allowedFailures`.
  */
-export function validateOperative(npc: { name: string; stats: Stats; decisionTree: DecisionTree }) {
-  const { name, stats, decisionTree: tree } = npc;
+export function validateScenario(scenario: {
+  title: string;
+  allowedFailures: number;
+  decisionTree: DecisionTree;
+  npcs: { name: string; stats: Stats }[];
+}): void {
+  const { decisionTree: tree, allowedFailures } = scenario;
   const problems: string[] = [];
-  for (const [stat, value] of Object.entries(stats)) {
-    if (!Number.isInteger(value) || value < 1 || value > 100) {
-      problems.push(`${stat} is ${value}, not 1 to 100`);
+  for (const { name, stats } of scenario.npcs) {
+    for (const [stat, value] of Object.entries(stats)) {
+      if (!Number.isInteger(value) || value < 1 || value > 100) {
+        problems.push(`${name}'s ${stat} is ${value}, not 1 to 100`);
+      }
     }
   }
 
-  const parents = new Map<string, number>();
-  const visit = (nodeId: string) => parents.set(nodeId, (parents.get(nodeId) ?? 0) + 1);
-  visit(tree.startNodeId);
-  for (const [nodeId, node] of Object.entries(tree.nodes)) {
-    if (node.type === 'ending') {
-      continue;
+  const visited = new Set<string>();
+  const visit = (nodeId: string, failures: number) => {
+    const node = tree.nodes[nodeId];
+    if (!node) {
+      problems.push(`"${nodeId}" is referenced but doesn't exist`);
+      return;
     }
+    if (visited.has(nodeId)) {
+      problems.push(`"${nodeId}" is reached more than one way; each node needs exactly one parent`);
+      return;
+    }
+    visited.add(nodeId);
+    if (node.type === 'ending') {
+      return;
+    }
+
     const [first, second] = node.choices;
     if (first.stat === second.stat) {
       problems.push(`"${nodeId}" offers two ${first.stat} challenges`);
@@ -66,27 +83,24 @@ export function validateOperative(npc: { name: string; stats: Stats; decisionTre
     if (first.id === second.id) {
       problems.push(`"${nodeId}" has two challenges with ID "${first.id}"`);
     }
-    if (node.onSuccess === node.onFailure) {
-      problems.push(`"${nodeId}" leads to "${node.onSuccess}" on both success and failure`);
+    visit(node.onSuccess, failures);
+    const failureReachable = failures + 1 <= allowedFailures;
+    if (failureReachable && node.onFailure === undefined) {
+      problems.push(`"${nodeId}" needs an onFailure: the team can still afford a failure there`);
+    } else if (!failureReachable && node.onFailure !== undefined) {
+      problems.push(`"${nodeId}" has an onFailure, but failing there always loses the game`);
+    } else if (node.onFailure !== undefined) {
+      visit(node.onFailure, failures + 1);
     }
-    visit(node.onSuccess);
-    visit(node.onFailure);
-  }
+  };
+  visit(tree.startNodeId, 0);
 
-  for (const [nodeId, count] of parents) {
-    if (!tree.nodes[nodeId]) {
-      problems.push(`"${nodeId}" is referenced but doesn't exist`);
-    } else if (count > 1) {
-      problems.push(`"${nodeId}" is reached ${count} ways; each node needs exactly one parent`);
-    }
-  }
   for (const nodeId of Object.keys(tree.nodes)) {
-    if (!parents.has(nodeId)) {
+    if (!visited.has(nodeId)) {
       problems.push(`"${nodeId}" is unreachable`);
     }
   }
-
   if (problems.length > 0) {
-    throw new Error(`${name}'s decision tree is invalid:\n- ${problems.join('\n- ')}`);
+    throw new Error(`"${scenario.title}" is invalid:\n- ${problems.join('\n- ')}`);
   }
 }
