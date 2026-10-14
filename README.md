@@ -19,6 +19,7 @@ Hono for HTTP and SQLite (`better-sqlite3` + Drizzle ORM). Entity types shared b
 npm install
 npm run db:reset  # (re)creates data/app.db from the schema and inserts demo data
 npm start         # Angular on :4200 (proxies /api to :3000) + API server on :3000
+npm run start:fake  # Same, but with fake ElevenLabs and Twilio: no real calls
 ```
 
 - Configuration and secrets go in a `.env` file at the repo root (gitignored, never commit it). All
@@ -34,7 +35,7 @@ npm start         # Angular on :4200 (proxies /api to :3000) + API server on :30
   TWILIO_AUTH_TOKEN=
   TWILIO_PHONE_NUMBER=
 
-  # Without these, operative calls are logged ("dry run") instead of placed. See "ElevenLabs setup".
+  # Needed to place real calls (not with --fake-services). See "ElevenLabs setup".
   ELEVENLABS_API_KEY=
   ELEVENLABS_PHONE_NUMBER_ID=
   ELEVENLABS_WEBHOOK_SECRET=
@@ -44,6 +45,11 @@ npm start         # Angular on :4200 (proxies /api to :3000) + API server on :30
   `npm run db:reset`. This wipes all data. Stop the server first, since it holds a lock on the
   database file.
 - `npm run typecheck` type-checks the server code.
+- `npm run test:e2e` plays a whole game against a real server with fake services, and checks the
+  rules along the way (`server/test/e2e.ts`).
+- The server takes two flags (`npm run server -- <flags>`): `--fake-services` swaps ElevenLabs for
+  `FakeElevenLabs`, which answers each call with a random order, and only logs Twilio hang-ups;
+  `--no-scheduler` stops it placing calls on its own.
 - The UI can subscribe to live updates at `GET /api/events` (Server-Sent Events).
 - Webhooks from Twilio and ElevenLabs need a public URL. Run a tunnel (e.g.
   `tailscale funnel --bg 3000` or `ngrok http 3000`) and set `PUBLIC_URL` to the tunnel URL.
@@ -57,10 +63,11 @@ agent through a Twilio number imported into ElevenLabs:
 
 1. Calls are one at a time per session. Starting a session sets its `nextCallTime`, and every call
    that ends sets it again (`server/game/calls.ts` has the timing constants).
-2. When `nextCallTime` passes, the scheduler (not built yet) places a call for the operative
-   `pickNextCaller` picks (`server/game/turn-order.ts`): a random one among those who have called
-   the fewest times. So the player hears from every operative before anyone calls again, in a
-   different order each round. The caller takes the mission's current node
+2. When `nextCallTime` passes, the scheduler (`server/game/scheduler.ts`) places a call
+   (`placeNextCall`) for the operative `pickNextCaller` picks (`server/game/turn-order.ts`): a
+   random one among those who have called the fewest times. So the player hears from every
+   operative before anyone calls again, in a different order each round. The caller takes the
+   mission's current node
    (`GameSession.decisionNodeId`). Every operative is played by the game's agent
    (`GameTemplate.agentId`); each call switches to the operative's `voiceId` and passes the node
    as dynamic variables.

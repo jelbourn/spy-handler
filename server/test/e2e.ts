@@ -4,8 +4,9 @@
 //
 // Run with `npm run test:e2e`. Uses its own database (kept for inspection) and port, so it can run
 // next to `npm start`.
-// There's no scheduler yet, so this script plays its part: it waits for each call to end, then has
-// the next operative call right away instead of waiting for `nextCallTime`.
+// The server runs with `--fake-services --no-scheduler`, and this script plays the scheduler's
+// part with `placeNextCall`: it waits for each call to end, then places the next one right away
+// instead of waiting for `nextCallTime`.
 
 import { spawn, type ChildProcess } from 'node:child_process';
 import type {
@@ -40,7 +41,7 @@ const { gameSessions, gameTemplates, npcCalls, npcSessions, npcTemplates } =
   await import('../db/schema.ts');
 const { FakeElevenLabs } = await import('../elevenlabs/fake-elevenlabs.ts');
 const { getNode } = await import('../game/decision-tree.ts');
-const { pickNextCaller } = await import('../game/turn-order.ts');
+const { placeNextCall } = await import('../game/calls.ts');
 
 const failures: string[] = [];
 function check(condition: boolean, message: string): void {
@@ -50,7 +51,9 @@ function check(condition: boolean, message: string): void {
   }
 }
 
-const server = spawn(process.execPath, ['--import', 'tsx', 'server/index.ts'], {
+// The test places calls itself, so the server's scheduler stays off.
+const serverArgs = ['--import', 'tsx', 'server/index.ts', '--fake-services', '--no-scheduler'];
+const server = spawn(process.execPath, serverArgs, {
   env: process.env,
   stdio: ['ignore', 'ignore', 'inherit'],
 });
@@ -77,67 +80,22 @@ async function playGame(gameSessionId: number): Promise<void> {
   const callsMade = new Map<number, number>();
 
   for (let turn = 1; !getSession(gameSessionId).endTime; turn++) {
-    const caller = pickNextCaller(gameSessionId);
-    if (!caller) {
+    const before = getSession(gameSessionId);
+    const call = await placeNextCall(gameSessionId, fake);
+    if (!call) {
       check(false, 'No operative to call, but the game has not ended');
       return;
     }
+    const caller = getNpcSession(call.npcSessionId);
     checkTurnOrder(gameSessionId, caller, callsMade);
     callsMade.set(caller.id, (callsMade.get(caller.id) ?? 0) + 1);
 
-    const before = getSession(gameSessionId);
-    const call = await placeFakeCall(fake, caller, before);
     const finished = await waitForCallToEnd(call.id);
     const after = getSession(gameSessionId);
     console.log(`${turn}. ${getOperative(caller).name} @ ${before.decisionNodeId}`);
     console.log(`   ${describeResult(finished, after)}`);
     checkCall(caller, before, finished, after);
   }
-}
-
-/** Records a call about the mission's current node and has the fake "place" it. */
-async function placeFakeCall(
-  fake: InstanceType<typeof FakeElevenLabs>,
-  caller: NpcSession,
-  game: GameSession,
-) {
-  const npc = getOperative(caller);
-  const template = getTemplate(game);
-  const node = getNode(template.decisionTree, game.decisionNodeId);
-  const call = db
-    .insert(npcCalls)
-    .values({
-      npcSessionId: caller.id,
-      nodeId: game.decisionNodeId,
-      startTime: new Date().toISOString(),
-    })
-    .returning()
-    .get();
-
-  const placed = await fake.outboundCall({
-    agentId: 'e2e-agent',
-    agentPhoneNumberId: 'e2e-phone',
-    toNumber: '+15555550100',
-    conversationInitiationClientData: {
-      dynamicVariables: {
-        npc_name: npc.name,
-        persona: npc.persona,
-        scenario: template.scenario,
-        situation: node.situation,
-        choices:
-          node.type === 'choice'
-            ? node.choices.map((choice) => `- ${choice.id}: ${choice.description}`).join('\n')
-            : '',
-        npc_session_id: caller.id,
-        npc_call_id: call.id,
-      },
-    },
-  });
-  db.update(npcCalls)
-    .set({ conversationId: placed.conversationId, callSid: placed.callSid })
-    .where(eq(npcCalls.id, call.id))
-    .run();
-  return call;
 }
 
 /** Everyone calls once before anyone calls again. */
@@ -268,6 +226,10 @@ async function waitForServer(): Promise<void> {
 
 function getSession(id: number): GameSession {
   return db.select().from(gameSessions).where(eq(gameSessions.id, id)).get()!;
+}
+
+function getNpcSession(id: number): NpcSession {
+  return db.select().from(npcSessions).where(eq(npcSessions.id, id)).get()!;
 }
 
 function getOperative(npcSession: NpcSession): NpcTemplate {
