@@ -2,7 +2,7 @@ import { generateSQLiteDrizzleJson, generateSQLiteMigration } from 'drizzle-kit/
 import { rmSync } from 'node:fs';
 import * as schema from './schema.ts';
 
-// Deletes the database and recreates it from schema.ts, with all tables empty. There are no
+// Deletes the database, recreates all tables from schema.ts, then seeds the scenarios. There are no
 // migrations while the design is in flux, so run this after every schema change.
 const dbPath = process.env['DB_PATH'] ?? 'data/app.db';
 for (const suffix of ['', '-wal', '-shm']) {
@@ -20,3 +20,4 @@ db.transaction((tx) => {
     tx.run(statement);
   }
 });
+await import('./seed.ts');

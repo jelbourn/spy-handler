@@ -53,8 +53,12 @@ export interface Dossier {
 }
 
 /**
- * An operative's branching storyline. On each call the handler picks one of two challenges. The
- * operative rolls 1 to 100 against the challenge's stat and moves to its success or failure node.
+ * An operative's branching storyline. On each call the handler picks one of two challenges, which
+ * only decides the odds: the operative rolls 1 to 100 against that challenge's stat, and moves to
+ * the node's success or failure child either way.
+ *
+ * It's a strict tree: every node except the start is reached from exactly one parent outcome, so
+ * each briefing can say how the previous attempt went.
  */
 export interface DecisionTree {
   startNodeId: string;
@@ -67,16 +71,15 @@ export type DecisionNode = ChoiceNode | EndingNode;
 export interface ChoiceNode {
   type: 'choice';
   /**
-   * Briefing for the agent, addressed to the operative ("You're in..."): how the last attempt went,
-   * what's happening now, and what they need from the handler. The agent explains it in character.
+   * Briefing for the agent, addressed to the operative ("You're in..."): whether the previous
+   * attempt succeeded or failed, what's happening now, and what they need from the handler. The
+   * agent explains it in character.
    */
   situation: string;
   /** Two challenges testing different stats. */
   choices: [Challenge, Challenge];
-  /** Seconds after reaching this node before the operative calls. Defaults to 120. */
-  callDelaySecs?: number;
-  /** If the handler hasn't decided after this many calls, the operative acts on their own. */
-  ifNoDecision?: { afterCalls: number; nextNodeId: string };
+  onSuccess: string;
+  onFailure: string;
 }
 
 export interface Challenge {
@@ -89,14 +92,12 @@ export interface Challenge {
   description: string;
   /** Hidden from the player and the agent. */
   stat: Stat;
-  onSuccess: string;
-  onFailure: string;
 }
 
 /** The end of an operative's storyline. */
 export interface EndingNode {
   type: 'ending';
-  /** What the operative reports to the handler on their final call. */
+  /** What the operative reports to the handler on their final call, starting with how it went. */
   situation: string;
   result: 'success' | 'failure';
 }
@@ -115,6 +116,11 @@ export interface GameSession {
   /** Null while the session is active. */
   endTime: string | null;
   status: SessionStatus;
+  /**
+   * When the next operative calls. Calls are one at a time per session, so this is null during a
+   * call and after the session ends.
+   */
+  nextCallTime: string | null;
 }
 
 export interface NpcSession {
@@ -122,12 +128,13 @@ export interface NpcSession {
   gameSessionId: number;
   npcTemplateId: number;
   decisionNodeId: string;
-  /** Calls in a row that ended without a decision; reset when the operative moves on. */
-  callsWithoutDecision: number;
+  /**
+   * Calls this operative has made. The next caller is picked from the operatives with the fewest,
+   * so everyone calls once before anyone calls again.
+   */
+  callCount: number;
   /** When the player last made a decision for this operative. */
   lastCommsTime: string | null;
-  /** When the operative will next call. Null during a call, and after the ending is reported. */
-  deadline: string | null;
   status: SessionStatus;
 }
 
@@ -156,12 +163,17 @@ export interface NpcCall {
   outcome: NpcCallOutcome | null;
   summary: string | null;
   transcript: NpcCallTranscriptTurn[] | null;
-  /** The challenge the handler picked on this call, if any, and how the roll went. */
+  /**
+   * The challenge picked on this call and how the roll went. Every call about a choice node ends
+   * with one: if the handler didn't give an order, the operative picks by coin toss.
+   */
   decision: ChallengeRoll | null;
 }
 
 export interface ChallengeRoll {
   challengeId: string;
+  /** `operative` when the handler gave no order (missed call, or no clear decision). */
+  pickedBy: 'handler' | 'operative';
   stat: Stat;
   /** The operative's stat at the time of the roll. */
   statValue: number;

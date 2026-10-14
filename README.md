@@ -58,23 +58,26 @@ npm start         # Angular on :4200 (proxies /api to :3000) + API server on :30
 Operatives always call the player; the player never calls them. Calls are placed by an ElevenLabs
 agent through a Twilio number imported into ElevenLabs:
 
-1. Starting a session gives each operative a `deadline` for its first call
-   (`server/game/calls.ts` has the timing constants).
-2. The scheduler (`server/game/scheduler.ts`) polls for passed deadlines and places one call at a
-   time per session. Every operative is played by the game's agent (`GameTemplate.agentId`); each
-   call switches to the operative's `voiceId` and passes the current decision tree node as dynamic
-   variables.
+1. Calls are one at a time per session. Starting a session sets its `nextCallTime`, and every call
+   that ends sets it again (`server/game/calls.ts` has the timing constants).
+2. When `nextCallTime` passes, the scheduler (not built yet) places a call for the operative
+   `pickNextCaller` picks (`server/game/turn-order.ts`): a random one among those who have called
+   the fewest times. So the player hears from every operative before anyone calls again, in a
+   different order each round. Every operative is played by the game's agent
+   (`GameTemplate.agentId`); each call switches to the operative's `voiceId` and passes the current
+   decision tree node as dynamic variables.
 3. During the call, the agent calls the `submit_decision` tool once the player picks a challenge.
    The operative rolls 1 to 100 against the challenge's stat (success if the roll is at most the
-   stat), the roll is saved on the call, and the operative moves to the success or failure node.
-   The agent isn't told the result; the next call's briefing reveals it. Only one order is
+   stat), the roll is saved on the call, and the operative moves to the node's success or failure
+   child. The agent isn't told the result; the next call's briefing reveals it. Only one order is
    accepted per call, and the server hangs up through Twilio 10 seconds later (after the agent
    acknowledges), in case the agent doesn't end the call itself.
-4. After the call, the post-call webhook stores the summary and transcript. If no decision was made
-   (or the call failed), the operative calls back after a minute, or acts on their own once the
-   node's `ifNoDecision` limit is reached.
-5. Reaching an ending, either way, triggers one last call where the operative reports how it went.
-   When that call ends (answered or not), the operative's `status` becomes the ending's `result`.
+4. After the call, the post-call webhook stores the summary and transcript. Every call about a
+   choice node ends with a decision: if the player gave no order (a missed call, or no clear
+   decision), the operative picks one of the two challenges by coin toss and rolls for it.
+5. Once an operative reaches an ending, their next turn is a call reporting how it went. When that
+   call ends (answered or not), the operative's `status` becomes the ending's `result` and they
+   stop calling.
 6. The game session fails as soon as any operative fails, and succeeds once every operative has
    succeeded. Either way it ends, and the remaining operatives stop calling.
 
@@ -88,26 +91,27 @@ session page:
 - **Muscle**: fighting, lifting, climbing, jumping, swimming
 
 Each operative's storyline is a `DecisionTree` (see `shared/models.ts`), stored as JSON on
-`NpcTemplate`. Scenarios are written in `server/db/scenarios/` and checked by
-`validateOperatives` when seeding.
+`NpcTemplate`. Scenarios are written in `server/scenarios/` (listed in `index.ts`), and each
+operative is checked by `validateOperative` when seeding.
 
 - A tree has a `startNodeId` and a map of nodes keyed by readable IDs (`'captains-office'`).
-- A **choice** node has a `situation` (a briefing the agent explains in character) and exactly two
-  `choices`, each a challenge testing a different stat. It also has an optional `callDelaySecs`
-  before the operative calls about it (default 120), and an optional `ifNoDecision` (after N calls
-  without a decision, move to a node with no roll).
-- A challenge has an `id`, a `description`, its `stat`, and `onSuccess`/`onFailure` nodes. The
-  player is never told the stat: the description has to imply it through the action (sneaking,
-  talking, climbing...), so it must not name the stat. Neither should the `id`, which the agent
-  also sees.
-- Since several paths can lead to the same node, a situation should only describe where the
-  operative is now, not which challenge got them there.
+- A **choice** node has a `situation` (a briefing the agent explains in character), exactly two
+  `choices`, each a challenge testing a different stat, and `onSuccess`/`onFailure` child nodes.
+  The player's pick only sets the odds: either challenge leads to the same two children.
+- A challenge has an `id`, a `description` and its `stat`. The player is never told the stat:
+  the description has to imply it through the action (sneaking, talking, climbing...), so it must
+  not name the stat. Neither should the `id`, which the agent also sees.
+- The tree is strict: every node except the start has exactly one parent outcome. So each
+  situation starts by saying whether the previous attempt succeeded or failed, and what happens
+  next builds on that. It shouldn't say which challenge was picked, since either could have been.
 - An **ending** node has a `situation` the operative reports and a `result`, either `success` or
   `failure`.
+- How many decisions an operative faces before an ending is up to the scenario.
 
 The example scenario, `captain-hanks.ts` ("Operation Golden Grill"), has three operatives
-infiltrating Captain Hanks's supply chain to steal the Tandori Halloumi recipe. Each is strong in
-one stat and weak in another:
+infiltrating Captain Hanks's supply chain to steal the Tandori Halloumi recipe, with two decisions
+each: the first decides whether they get in cleanly or have to recover, and the second whether they
+get what they came for. Each is strong in one stat and weak in another:
 
 | Operative | Target                        | Stealth | Charm | Muscle |
 |-----------|-------------------------------|---------|-------|--------|
@@ -119,7 +123,7 @@ one stat and weak in another:
 
 One agent plays every operative in a game, switching to each operative's voice per call. Agent
 and voice IDs aren't secret: they're checked in as the scenario's `agentId` and each operative's
-`voiceId` in `server/db/scenarios/`. While `agentId` is null, calls are logged instead of placed
+`voiceId` in `server/scenarios/`. While `agentId` is null, calls are logged instead of placed
 (dry run). An operative whose `voiceId` is null speaks in the agent's own voice.
 
 1. Buy a Twilio number and import it under **Agents → Phone Numbers**. Copy its phone number ID
@@ -146,7 +150,7 @@ and voice IDs aren't secret: they're checked in as the scenario's `agentId` and 
 ## Entities
 
 Source of truth is `server/db/schema.ts` (columns are snake_case in SQLite). Datetimes are stored
-as ISO-8601 strings. GameTemplate and NpcTemplate rows are seeded from `server/db/scenarios/`.
+as ISO-8601 strings. GameTemplate and NpcTemplate rows are seeded from `server/scenarios/`.
 
 | User        |        |                                                             |
 |-------------|--------|-------------------------------------------------------------|
@@ -179,31 +183,31 @@ as ISO-8601 strings. GameTemplate and NpcTemplate rows are seeded from `server/d
 | startTime      | datetime |                                                                                                                             |
 | endTime        | datetime | nullable; null = active. A user has at most one active session                                                              |
 | status         | string   | `in-progress`, `success` or `failure`. Fails when any operative fails; succeeds when all succeed. Ending early is a failure |
+| nextCallTime   | datetime | nullable; when the next operative calls. Null during a call and once the session has ended                                  |
 
-| NpcSession           |          |                                                                                                     |
-|----------------------|----------|-----------------------------------------------------------------------------------------------------|
-| id                   | int      |                                                                                                     |
-| gameSessionId        | int      | → GameSession                                                                                       |
-| npcTemplateId        | int      | → NpcTemplate                                                                                       |
-| decisionNodeId       | string   | Current node in the decision tree; starts at its `startNodeId`                                      |
-| callsWithoutDecision | int      | Default 0. Calls in a row with no decision, for `ifNoDecision`                                      |
-| lastCommsTime        | datetime | nullable; when the handler last picked a challenge                                                  |
-| deadline             | datetime | nullable; when the operative next calls. Null during a call, and after the ending has been reported |
-| status               | string   | `in-progress`, `success` or `failure`; set to the ending's result once it's reported                |
-
-| NpcCall        |          |                                                                                                |
+| NpcSession     |          |                                                                                                |
 |----------------|----------|------------------------------------------------------------------------------------------------|
 | id             | int      |                                                                                                |
-| npcSessionId   | int      | → NpcSession                                                                                   |
-| conversationId | string   | nullable, unique; ElevenLabs conversation ID, set once the call is placed                      |
-| callSid        | string   | nullable; Twilio call SID, set once the call is placed                                         |
-| nodeId         | string   | The decision tree node the operative called about; an ending makes it the report call          |
-| startTime      | datetime |                                                                                                |
-| endTime        | datetime | nullable; null = in progress                                                                   |
-| outcome        | string   | nullable until the call ends; completed, busy, no-answer, failed, timeout, or dry-run          |
-| summary        | string   | nullable; ElevenLabs transcript summary                                                        |
-| transcript     | json     | nullable; `[{role, message}]`                                                                  |
-| decision       | json     | nullable; the challenge picked on this call: `{challengeId, stat, statValue, roll, succeeded}` |
+| gameSessionId  | int      | → GameSession                                                                                  |
+| npcTemplateId  | int      | → NpcTemplate                                                                                  |
+| decisionNodeId | string   | Current node in the decision tree; starts at its `startNodeId`                                 |
+| callCount      | int      | Default 0. Calls made so far; the next caller has the fewest, so everyone calls once per round |
+| lastCommsTime  | datetime | nullable; when the handler last picked a challenge                                             |
+| status         | string   | `in-progress`, `success` or `failure`; set to the ending's result once it's reported           |
+
+| NpcCall        |          |                                                                                                                                                                                                                  |
+|----------------|----------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| id             | int      |                                                                                                                                                                                                                  |
+| npcSessionId   | int      | → NpcSession                                                                                                                                                                                                     |
+| conversationId | string   | nullable, unique; ElevenLabs conversation ID, set once the call is placed                                                                                                                                        |
+| callSid        | string   | nullable; Twilio call SID, set once the call is placed                                                                                                                                                           |
+| nodeId         | string   | The decision tree node the operative called about; an ending makes it the report call                                                                                                                            |
+| startTime      | datetime |                                                                                                                                                                                                                  |
+| endTime        | datetime | nullable; null = in progress                                                                                                                                                                                     |
+| outcome        | string   | nullable until the call ends; completed, busy, no-answer, failed, timeout, or dry-run                                                                                                                            |
+| summary        | string   | nullable; ElevenLabs transcript summary                                                                                                                                                                          |
+| transcript     | json     | nullable; `[{role, message}]`                                                                                                                                                                                    |
+| decision       | json     | nullable; the challenge picked on this call and its roll: `{challengeId, pickedBy, stat, statValue, roll, succeeded}`. `pickedBy` is `operative` for a coin toss. Set on every finished call about a choice node |
 
 ## API
 
@@ -221,4 +225,3 @@ as ISO-8601 strings. GameTemplate and NpcTemplate rows are seeded from `server/d
 |----------|-----------------------------------|-----------------------------|---------------------------------------------------------------------------------------------------------------------------------------|
 | POST     | /elevenlabs/tools/submit-decision | {npc_session_id, choice_id} | Agent server tool; rolls the picked challenge. 401 bad `X-Tool-Secret`. Game errors are 200 with `{error}` so the agent can read them |
 | POST     | /elevenlabs/webhooks              | ElevenLabs webhook          | Post-call transcript or call initiation failure. 401 bad signature                                                                    |
-| POST     | /twilio/sms                       | Twilio webhook              | Inbound SMS; responds with TwiML. 403 bad signature                                                                                   |

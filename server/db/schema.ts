@@ -37,6 +37,7 @@ export const gameSessions = sqliteTable('game_sessions', {
   startTime: text().notNull(),
   endTime: text(),
   status: text().$type<models.SessionStatus>().notNull().default('in-progress'),
+  nextCallTime: text(),
 });
 
 export const npcSessions = sqliteTable('npc_sessions', {
@@ -48,9 +49,8 @@ export const npcSessions = sqliteTable('npc_sessions', {
     .notNull()
     .references(() => npcTemplates.id),
   decisionNodeId: text().notNull(),
-  callsWithoutDecision: integer().notNull().default(0),
+  callCount: integer().notNull().default(0),
   lastCommsTime: text(),
-  deadline: text(),
   status: text().$type<models.SessionStatus>().notNull().default('in-progress'),
 });
 

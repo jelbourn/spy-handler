@@ -3,12 +3,8 @@ import type { Context } from 'hono';
 import type { CreateGameSessionRequest, GameSessionDetail } from '../../shared/models.ts';
 import { db } from '../db/index.ts';
 import { gameSessions, gameTemplates, npcSessions, npcTemplates, users } from '../db/schema.ts';
-
-// Placeholder pacing until calls are implemented.
-/** Delay before the first operative calls after a session starts. */
-const FIRST_CALL_DELAY_MS = 15_000;
-/** Spacing between each operative's first call. */
-const FIRST_CALL_STAGGER_MS = 60_000;
+import { FIRST_CALL_DELAY_MS } from '../game/calls.ts';
+import { endGameSession } from '../game/game-sessions.ts';
 
 /** Lists all game sessions as `GameSession[]`, newest first. */
 export function listSessions(c: Context) {
@@ -17,7 +13,7 @@ export function listSessions(c: Context) {
 
 /**
  * Starts a game session from a `CreateGameSessionRequest`, creating an `NpcSession` per operative
- * and scheduling their first calls. Responds 201 with the `GameSession`.
+ * and scheduling the first call. Responds 201 with the `GameSession`.
  *
  * Errors: 400 for a bad body, 404 for an unknown user or template, and 409 if the user already has
  * an active session (only one is allowed at a time).
@@ -54,6 +50,7 @@ export async function startSession(c: Context) {
         userId: userId!,
         gameTemplateId: gameTemplateId!,
         startTime: new Date(now).toISOString(),
+        nextCallTime: new Date(now + FIRST_CALL_DELAY_MS).toISOString(),
       })
       .returning()
       .get();
@@ -65,11 +62,10 @@ export async function startSession(c: Context) {
     if (npcs.length > 0) {
       tx.insert(npcSessions)
         .values(
-          npcs.map((npc, i) => ({
+          npcs.map((npc) => ({
             gameSessionId: session.id,
             npcTemplateId: npc.id,
             decisionNodeId: npc.decisionTree.startNodeId,
-            deadline: new Date(now + FIRST_CALL_DELAY_MS + i * FIRST_CALL_STAGGER_MS).toISOString(),
           })),
         )
         .run();
@@ -116,12 +112,7 @@ export function getSessionDetail(c: Context) {
  */
 export function endSession(c: Context) {
   const id = Number(c.req.param('sessionId'));
-  const session = db
-    .update(gameSessions)
-    .set({ status: 'failure', endTime: new Date().toISOString() })
-    .where(and(eq(gameSessions.id, id), isNull(gameSessions.endTime)))
-    .returning()
-    .get();
+  const session = endGameSession(id, 'failure');
   if (!session) {
     return c.json({ error: `No active session ${c.req.param('sessionId')}` }, 404);
   }
