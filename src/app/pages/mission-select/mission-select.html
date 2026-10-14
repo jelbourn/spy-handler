@@ -47,6 +47,10 @@
     </p>
   </div>
 
+  @if (errorMessage()) {
+  <p class="error-banner" role="alert">! {{ errorMessage() }}</p>
+  }
+
   <!-- Responsive Scenario Grid (Flex / Grid) -->
   <div class="scenario-grid">
     @for (scenario of scenarios(); track scenario.id; let idx = $index) {
@@ -55,14 +59,10 @@
       <!-- Card Header & Badge -->
       <div class="card-top">
         <span class="scenario-number">0{{ idx + 1 }} // {{ scenario.code }}</span>
-        <span class="threat-tag" [attr.data-threat]="scenario.threatLevel">
-          {{ scenario.threatLevel }}
-        </span>
       </div>
 
       <!-- Mission Title -->
       <h3 class="scenario-title">{{ scenario.name }}</h3>
-      <p class="theater-text">THEATER: {{ scenario.theater }} ({{ scenario.year }})</p>
 
       <hr class="card-rule" />
 

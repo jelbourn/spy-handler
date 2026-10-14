@@ -1,131 +1,178 @@
-import { Service, computed, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Service, computed, inject, signal } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
+import type {
+  GameSession,
+  GameSessionDetail,
+  ScenarioSummary,
+  Stat,
+  Stats,
+} from '../../../shared/models';
+import { apiErrorMessage } from './user.service';
 
 export interface OperativePreview {
   codename: string;
   role: string;
-  avatarSeed: string;
 }
 
+/** A scenario as shown on a mission card. */
 export interface MissionScenario {
-  id: string;
+  id: number;
   code: string;
   name: string;
-  theater: string;
-  year: string;
-  threatLevel: 'DEFCON 3' | 'DEFCON 2' | 'DEFCON 1';
   briefing: string;
   intensity: string;
   operatives: OperativePreview[];
 }
 
+/** How often the active mission is refreshed while its dashboard is open. */
+const POLL_MS = 2_000;
+
 @Service()
 export class MissionService {
-  readonly scenarios = signal<MissionScenario[]>([
-    {
-      id: 'cold-breeze',
-      code: 'SEC-ORD // 64-019',
-      name: 'OPERATION: COLD BREEZE',
-      theater: 'EAST BERLIN',
-      year: '1964',
-      threatLevel: 'DEFCON 2',
-      briefing:
-        'Infiltrate Stasi communications relay at Friedrichstraße. Intercept magnetic telemetry tape before 0200 curfew. Counter-surveillance is active.',
-      intensity: 'HIGH // 2 CONCURRENT FIELD OPERATIVES',
-      operatives: [
-        { codename: 'FALCON', role: 'Infiltration / Locksmith', avatarSeed: 'falcon' },
-        { codename: 'VIPER', role: 'Surveillance / Wiretap', avatarSeed: 'viper' },
-      ],
-    },
-    {
-      id: 'black-canary',
-      code: 'SEC-ORD // 62-088',
-      name: 'OPERATION: BLACK CANARY',
-      theater: 'HAVANA SECTOR',
-      year: '1962',
-      threatLevel: 'DEFCON 1',
-      briefing:
-        'Secure naval freight manifest from port authority office. Intercept naval officer before transport arrives at guarded pier.',
-      intensity: 'CRITICAL // 1 FIELD OPERATIVE',
-      operatives: [
-        { codename: 'ECHO', role: 'Counter-Intelligence', avatarSeed: 'echo' },
-      ],
-    },
-    {
-      id: 'iron-embassy',
-      code: 'SEC-ORD // 65-104',
-      name: 'OPERATION: IRON EMBASSY',
-      theater: 'PRAGUE',
-      year: '1965',
-      threatLevel: 'DEFCON 3',
-      briefing:
-        'Diplomatic reception infiltration. Plant audio transmitter inside ambassadorial private study and retrieve cipher codebook.',
-      intensity: 'MODERATE // 2 FIELD OPERATIVES',
-      operatives: [
-        { codename: 'SABLE', role: 'Social Engineering', avatarSeed: 'sable' },
-        { codename: 'TALON', role: 'Extraction Specialist', avatarSeed: 'talon' },
-      ],
-    },
-    {
-      id: 'shadow-courier',
-      code: 'SEC-ORD // 63-042',
-      name: 'OPERATION: SHADOW COURIER',
-      theater: 'VIENNA STATION',
-      year: '1963',
-      threatLevel: 'DEFCON 2',
-      briefing:
-        'Intercept defector contact at tram terminal. Verify authentic identity token before hostile tracking assets establish visual lock.',
-      intensity: 'HIGH // 1 FIELD OPERATIVE',
-      operatives: [
-        { codename: 'RAVEN', role: 'Tactical Recon', avatarSeed: 'raven' },
-      ],
-    },
-  ]);
+  private readonly http = inject(HttpClient);
 
-  readonly selectedMissionId = signal<string>('cold-breeze');
-  readonly activeMission = signal<MissionScenario | null>(null);
+  readonly scenarios = signal<MissionScenario[]>([]);
+  readonly selectedMissionId = signal<number | null>(null);
 
-  readonly elapsedSeconds = signal<number>(0);
-  readonly isRunning = signal<boolean>(false);
+  /** The signed-in user's session that hasn't ended, if any. */
+  readonly activeSession = signal<GameSession | null>(null);
+  /** The active (or just-ended) session's details, refreshed while the dashboard polls. */
+  readonly sessionDetail = signal<GameSessionDetail | null>(null);
 
-  private timerIntervalId: ReturnType<typeof setInterval> | null = null;
+  readonly isRunning = computed(() => {
+    const session = this.activeSession();
+    return session !== null && session.endTime === null;
+  });
+  readonly activeMission = computed(() => {
+    const session = this.activeSession();
+    return this.scenarios().find((scenario) => scenario.id === session?.gameTemplateId) ?? null;
+  });
 
+  private readonly now = signal(Date.now());
+  private pollIntervalId: ReturnType<typeof setInterval> | null = null;
+
+  /** Time since the active session started, until it ends. */
   readonly formattedElapsedTime = computed(() => {
-    const totalSeconds = this.elapsedSeconds();
+    const session = this.sessionDetail() ?? this.activeSession();
+    if (!session) {
+      return '00:00';
+    }
+    const end = session.endTime ? Date.parse(session.endTime) : this.now();
+    const totalSeconds = Math.max(0, Math.floor((end - Date.parse(session.startTime)) / 1000));
     const minutes = Math.floor(totalSeconds / 60);
     const seconds = totalSeconds % 60;
     return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
   });
 
-  selectMission(id: string): void {
+  constructor() {
+    setInterval(() => this.now.set(Date.now()), 1000);
+  }
+
+  async loadScenarios(): Promise<void> {
+    const summaries = await firstValueFrom(this.http.get<ScenarioSummary[]>('/api/scenarios'));
+    this.scenarios.set(summaries.map(toMissionScenario));
+    if (this.selectedMissionId() === null && summaries.length > 0) {
+      this.selectedMissionId.set(summaries[0].id);
+    }
+  }
+
+  /** Finds the user's session that hasn't ended, if any. */
+  async loadActiveSession(userId: number): Promise<void> {
+    const sessions = await firstValueFrom(
+      this.http.get<GameSession[]>(`/api/users/${userId}/sessions`),
+    );
+    this.activeSession.set(sessions.find((session) => session.endTime === null) ?? null);
+  }
+
+  selectMission(id: number): void {
     this.selectedMissionId.set(id);
   }
 
-  startMission(mission: MissionScenario): void {
-    this.selectedMissionId.set(mission.id);
-    this.activeMission.set(mission);
-    this.startTimer();
-  }
-
-  startTimer(): void {
-    this.stopTimer();
-    this.elapsedSeconds.set(0);
-    this.isRunning.set(true);
-
-    this.timerIntervalId = setInterval(() => {
-      this.elapsedSeconds.update((seconds) => seconds + 1);
-    }, 1000);
-  }
-
-  stopTimer(): void {
-    if (this.timerIntervalId !== null) {
-      clearInterval(this.timerIntervalId);
-      this.timerIntervalId = null;
+  /** Starts a session through `POST /api/sessions`, which schedules the first call. */
+  async startMission(scenario: MissionScenario, userId: number): Promise<GameSession> {
+    this.selectedMissionId.set(scenario.id);
+    try {
+      const session = await firstValueFrom(
+        this.http.post<GameSession>('/api/sessions', { userId, gameTemplateId: scenario.id }),
+      );
+      this.activeSession.set(session);
+      this.sessionDetail.set(null);
+      return session;
+    } catch (err: unknown) {
+      throw new Error(apiErrorMessage(err, 'Dispatch failed.'));
     }
-    this.isRunning.set(false);
   }
 
-  resetTimer(): void {
-    this.stopTimer();
-    this.elapsedSeconds.set(0);
+  /** Aborts the active session through `POST /api/sessions/:id/end`; it counts as a failure. */
+  async endMission(): Promise<void> {
+    const session = this.activeSession();
+    if (!session) {
+      return;
+    }
+    this.stopPolling();
+    const ended = await firstValueFrom(
+      this.http.post<GameSession>(`/api/sessions/${session.id}/end`, {}),
+    );
+    this.activeSession.set(ended);
   }
+
+  /** Refreshes the active session's details every couple of seconds until it ends. */
+  startPolling(): void {
+    this.stopPolling();
+    void this.refreshDetail();
+    this.pollIntervalId = setInterval(() => void this.refreshDetail(), POLL_MS);
+  }
+
+  stopPolling(): void {
+    if (this.pollIntervalId !== null) {
+      clearInterval(this.pollIntervalId);
+      this.pollIntervalId = null;
+    }
+  }
+
+  private async refreshDetail(): Promise<void> {
+    const session = this.activeSession();
+    if (!session) {
+      return;
+    }
+    const detail = await firstValueFrom(
+      this.http.get<GameSessionDetail>(`/api/sessions/${session.id}`),
+    );
+    this.sessionDetail.set(detail);
+    if (detail.endTime) {
+      this.activeSession.set(detail);
+      this.stopPolling();
+    }
+  }
+}
+
+const STAT_ROLES: Record<Stat, string> = {
+  stealth: 'Stealth Specialist',
+  charm: 'Social Engineering',
+  muscle: 'Climbing / Heavy Work',
+};
+
+/** An operative's strongest stat. */
+export function topStat(stats: Stats): Stat {
+  return (Object.keys(stats) as Stat[]).reduce((best, stat) =>
+    stats[stat] > stats[best] ? stat : best,
+  );
+}
+
+function toMissionScenario(summary: ScenarioSummary): MissionScenario {
+  const count = summary.operatives.length;
+  return {
+    id: summary.id,
+    code: `SEC-ORD // ${String(summary.id).padStart(3, '0')}`,
+    name: summary.title.toUpperCase(),
+    briefing: summary.briefing,
+    intensity:
+      `${count} FIELD OPERATIVE${count === 1 ? '' : 'S'} // ` +
+      `${summary.allowedFailures} MISTAKE${summary.allowedFailures === 1 ? '' : 'S'} ALLOWED`,
+    operatives: summary.operatives.map((operative) => ({
+      codename: operative.name.toUpperCase(),
+      role: STAT_ROLES[topStat(operative.stats)],
+    })),
+  };
 }

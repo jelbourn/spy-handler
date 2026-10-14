@@ -425,6 +425,15 @@
     }
   }
 
+  &.failed {
+    background-color: #ede7d5;
+    border-left: 4px solid #ba2d27;
+
+    .checkpoint-tag {
+      color: #ba2d27;
+    }
+  }
+
   &.active {
     border: 2px solid #ba2d27;
     background-color: #fcf9f2;

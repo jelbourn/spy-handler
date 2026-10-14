@@ -1,6 +1,6 @@
 import { desc, eq, or } from 'drizzle-orm';
 import type { Context } from 'hono';
-import type { CreateUserRequest } from '../../shared/models.ts';
+import type { CreateUserRequest, LoginRequest } from '../../shared/models.ts';
 import { db } from '../db/index.ts';
 import { gameSessions, users } from '../db/schema.ts';
 
@@ -38,6 +38,24 @@ export async function createUser(c: Context) {
 
   const user = db.insert(users).values({ username, handle, phoneNumber }).returning().get();
   return c.json(user, 201);
+}
+
+/**
+ * Signs in with a `LoginRequest`, responding with the `User`. During development any password is
+ * accepted. Responds 404 for an unknown username.
+ */
+export async function login(c: Context) {
+  const { username } = await c.req
+    .json<Partial<LoginRequest>>()
+    .catch((): Partial<LoginRequest> => ({}));
+  const user =
+    typeof username === 'string'
+      ? db.select().from(users).where(eq(users.username, username.trim())).get()
+      : undefined;
+  if (!user) {
+    return c.json({ error: `No handler with username "${username ?? ''}"` }, 404);
+  }
+  return c.json(user);
 }
 
 /** Lists a user's game sessions as `GameSession[]`, newest first. Responds 404 for an unknown user. */

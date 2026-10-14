@@ -1,8 +1,22 @@
 import { and, desc, eq, isNull } from 'drizzle-orm';
 import type { Context } from 'hono';
-import type { CreateGameSessionRequest, GameSessionDetail } from '../../shared/models.ts';
+import type {
+  Checkpoint,
+  CreateGameSessionRequest,
+  DecisionTree,
+  GameSessionDetail,
+  NpcCall,
+} from '../../shared/models.ts';
 import { db } from '../db/index.ts';
-import { gameSessions, gameTemplates, npcSessions, npcTemplates, users } from '../db/schema.ts';
+import {
+  gameSessions,
+  gameTemplates,
+  npcCalls,
+  npcSessions,
+  npcTemplates,
+  users,
+} from '../db/schema.ts';
+import { getNode } from '../game/decision-tree.ts';
 import { FIRST_CALL_DELAY_MS } from '../game/calls.ts';
 import { endGameSession } from '../game/game-sessions.ts';
 
@@ -85,15 +99,22 @@ export async function startSession(c: Context) {
 }
 
 /**
- * Gets a session as a `GameSessionDetail`: the session plus each operative's dossier and
- * `NpcSession`. Decision trees stay hidden from the player. Responds 404 if not found.
+ * Gets a session as a `GameSessionDetail`: the session, each operative's dossier and `NpcSession`,
+ * and a checkpoint per call. Only the nodes already called about are shown; the rest of the
+ * decision tree stays hidden. Responds 404 if not found.
  */
 export function getSessionDetail(c: Context) {
   const id = Number(c.req.param('sessionId'));
-  const session = db.select().from(gameSessions).where(eq(gameSessions.id, id)).get();
-  if (!session) {
+  const row = db
+    .select({ session: gameSessions, template: gameTemplates })
+    .from(gameSessions)
+    .innerJoin(gameTemplates, eq(gameSessions.gameTemplateId, gameTemplates.id))
+    .where(eq(gameSessions.id, id))
+    .get();
+  if (!row) {
     return c.json({ error: `Session ${c.req.param('sessionId')} not found` }, 404);
   }
+  const { session, template } = row;
   const operatives = db
     .select({ npcSession: npcSessions, npc: npcTemplates })
     .from(npcSessions)
@@ -101,14 +122,55 @@ export function getSessionDetail(c: Context) {
     .where(eq(npcSessions.gameSessionId, id))
     .orderBy(npcSessions.id)
     .all();
+  const calls = db
+    .select({ call: npcCalls })
+    .from(npcCalls)
+    .innerJoin(npcSessions, eq(npcCalls.npcSessionId, npcSessions.id))
+    .where(eq(npcSessions.gameSessionId, id))
+    .orderBy(npcCalls.id)
+    .all()
+    .map((row) => row.call);
   const detail: GameSessionDetail = {
     ...session,
+    title: template.title,
     operatives: operatives.map(({ npcSession, npc }) => ({
       dossier: { name: npc.name, bio: npc.persona, stats: npc.stats },
       npcSession,
     })),
+    checkpoints: calls.map((call, i) =>
+      toCheckpoint(call, template.decisionTree, session.endTime !== null || i < calls.length - 1),
+    ),
   };
   return c.json(detail);
+}
+
+/**
+ * @param revealed Whether the roll's result can be shown: once a later call has started (its
+ *     briefing reveals it) or the game has ended.
+ */
+function toCheckpoint(call: NpcCall, tree: DecisionTree, revealed: boolean): Checkpoint {
+  const node = getNode(tree, call.nodeId);
+  const base = {
+    callId: call.id,
+    npcSessionId: call.npcSessionId,
+    situation: node.situation,
+    startTime: call.startTime,
+  };
+  if (!call.endTime) {
+    return { ...base, status: 'live', decision: null };
+  }
+  if (!call.decision) {
+    // Only a call reporting the ending finishes without a decision.
+    return { ...base, status: 'cleared', decision: null };
+  }
+  if (!revealed) {
+    return { ...base, status: 'pending', decision: null };
+  }
+  return {
+    ...base,
+    status: call.decision.succeeded ? 'cleared' : 'failed',
+    decision: call.decision,
+  };
 }
 
 /**

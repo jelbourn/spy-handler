@@ -1,13 +1,17 @@
 import { Hono } from 'hono';
 import { notImplemented } from './not-implemented.ts';
+import { listScenarios } from './scenario.ts';
 import { endSession, getSessionDetail, listSessions, startSession } from './session.ts';
-import { createUser, listUserSessions } from './user.ts';
+import { createUser, listUserSessions, login } from './user.ts';
 
 /** The player-facing API, used by the Angular app. Mounted at `/api`. */
 export const gameService = new Hono();
 
+gameService.post('/login', login);
 gameService.post('/users', createUser);
 gameService.get('/users/:userId/sessions', listUserSessions);
+
+gameService.get('/scenarios', listScenarios);
 
 gameService.get('/sessions', listSessions);
 gameService.post('/sessions', startSession);

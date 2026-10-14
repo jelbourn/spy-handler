@@ -97,8 +97,9 @@ session page:
 
 The mission's storyline is a single `DecisionTree` (see `shared/models.ts`), shared by the whole
 team and stored as JSON on `GameTemplate`. Any operative can end up handling any node, so
-situations are addressed to whoever is calling. Scenarios are written in `server/scenarios/`
-(listed in `index.ts`) and checked by `validateScenario` when seeding.
+situations are addressed to whoever is calling. Scenarios are written in `server/scenarios/`, one
+per file exporting a `Scenario`. Seeding loads every file there (in filename order, which sets the
+template IDs) and checks each with `validateScenario`.
 
 - A tree has a `startNodeId` and a map of nodes keyed by readable IDs (`'office-door'`).
 - A **choice** node has a `situation` (a briefing the agent explains in character), exactly two
@@ -221,15 +222,17 @@ as ISO-8601 strings. GameTemplate and NpcTemplate rows are seeded from `server/s
 
 ## API
 
-| GameService |                         |                                 |                                                                                                                                                      |
-|-------------|-------------------------|---------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------|
-| POST        | /api/users              | {username, handle, phoneNumber} | 201 with the user. 400 bad body or non-E.164 phone number, 409 username or phone number taken                                                        |
-| GET         | /api/users/:id/sessions |                                 | The user's sessions, newest first. 404 unknown user                                                                                                  |
-| GET         | /api/sessions           |                                 | All sessions, newest first                                                                                                                           |
-| POST        | /api/sessions           | {userId, gameTemplateId}        | 201 with the session; creates NpcSessions and schedules first calls. 400 bad body, 404 unknown user/template, 409 user already has an active session |
-| GET         | /api/sessions/:id       |                                 | Session plus `operatives`: each one's `dossier` (name, bio, stats) and `npcSession`. 404 if not found                                                |
-| POST        | /api/sessions/:id/end   |                                 | Abandons the session: sets `endTime` and `status: failure`. 404 if no active session with that ID                                                    |
-| GET         | /api/events             |                                 | SSE stream: `session.created`, `session.ended` (also when the session succeeds or fails), `npc.updated`, `call.updated`, plus a `ping` every 15s     |
+| GameService |                         |                                 |                                                                                                                                                                                              |
+|-------------|-------------------------|---------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| POST        | /api/login              | {username, password}            | The user. During development any password is accepted. 404 unknown username                                                                                                                  |
+| POST        | /api/users              | {username, handle, phoneNumber} | 201 with the user. 400 bad body or non-E.164 phone number, 409 username or phone number taken                                                                                                |
+| GET         | /api/users/:id/sessions |                                 | The user's sessions, newest first. 404 unknown user                                                                                                                                          |
+| GET         | /api/scenarios          |                                 | Every game template as a `ScenarioSummary` (title, briefing, allowedFailures, operative dossiers); decision trees stay hidden                                                                |
+| GET         | /api/sessions           |                                 | All sessions, newest first                                                                                                                                                                   |
+| POST        | /api/sessions           | {userId, gameTemplateId}        | 201 with the session; creates NpcSessions and schedules first calls. 400 bad body, 404 unknown user/template, 409 user already has an active session                                         |
+| GET         | /api/sessions/:id       |                                 | Session plus `title`, `operatives` (each one's `dossier` and `npcSession`) and `checkpoints` (one per call: situation, status, and the roll once the next call reveals it). 404 if not found |
+| POST        | /api/sessions/:id/end   |                                 | Abandons the session: sets `endTime` and `status: failure`. 404 if no active session with that ID                                                                                            |
+| GET         | /api/events             |                                 | SSE stream: `session.created`, `session.ended` (also when the session succeeds or fails), `npc.updated`, `call.updated`, plus a `ping` every 15s                                             |
 
 | Webhooks |                                   |                             |                                                                                                                                       |
 |----------|-----------------------------------|-----------------------------|---------------------------------------------------------------------------------------------------------------------------------------|

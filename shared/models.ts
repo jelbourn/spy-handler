@@ -194,7 +194,43 @@ export interface NpcCallTranscriptTurn {
 }
 
 export interface GameSessionDetail extends GameSession {
+  /** The game template's title. */
+  title: string;
   operatives: { dossier: Dossier; npcSession: NpcSession }[];
+  /** One per call so far, oldest first. */
+  checkpoints: Checkpoint[];
+}
+
+/**
+ * A call as the player sees it on the mission timeline. A roll's result stays hidden (`pending`)
+ * until the next call starts or the game ends, since the next briefing is what reveals it.
+ */
+export interface Checkpoint {
+  callId: number;
+  npcSessionId: number;
+  /** The briefing the operative gave on this call. */
+  situation: string;
+  /** `live` while the call is in progress. A call reporting the ending is `cleared` once over. */
+  status: 'live' | 'pending' | 'cleared' | 'failed';
+  /** The order and its roll, once revealed. */
+  decision: ChallengeRoll | null;
+  startTime: string;
+}
+
+/** A game template as shown on the mission list. The decision tree stays hidden. */
+export interface ScenarioSummary {
+  id: number;
+  title: string;
+  /** The mission briefing (`GameTemplate.scenario`). */
+  briefing: string;
+  allowedFailures: number;
+  operatives: Dossier[];
+}
+
+/** During development, any password is accepted. */
+export interface LoginRequest {
+  username: string;
+  password: string;
 }
 
 export interface CreateUserRequest {

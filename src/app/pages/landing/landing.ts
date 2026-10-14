@@ -1,6 +1,7 @@
-import { Component, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Component, inject, signal } from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { UserService } from '../../services/user.service';
 
 @Component({
   selector: 'app-landing',
@@ -9,13 +10,24 @@ import { FormsModule } from '@angular/forms';
   styleUrl: './landing.scss',
 })
 export class LandingComponent {
-  protected readonly email = signal('');
+  private readonly router = inject(Router);
+  private readonly userService = inject(UserService);
+
+  protected readonly username = signal('');
   protected readonly passcode = signal('');
   protected readonly rememberHandler = signal(true);
 
-  protected onSubmit(event: Event): void {
+  protected readonly isSigningIn = this.userService.isSigningIn;
+  protected readonly errorMessage = signal<string | null>(null);
+
+  protected async onSubmit(event: Event): Promise<void> {
     event.preventDefault();
-    // Handler authentication logic
+    this.errorMessage.set(null);
+    try {
+      await this.userService.signIn({ username: this.username(), password: this.passcode() });
+      await this.router.navigate(['/missions']);
+    } catch (err: unknown) {
+      this.errorMessage.set(err instanceof Error ? err.message : 'Authentication failed.');
+    }
   }
 }
-
