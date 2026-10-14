@@ -1,7 +1,7 @@
-import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, computed, inject } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-import type { Checkpoint, Dossier, Stat } from '../../../../shared/models';
-import { MissionService, topStat } from '../../services/mission.service';
+import type { Checkpoint, Stats } from '../../../../shared/models';
+import { MissionService } from '../../services/mission.service';
 import { UserService } from '../../services/user.service';
 
 export interface Operative {
@@ -9,8 +9,7 @@ export interface Operative {
   id: number;
   codename: string;
   bio: string;
-  strengths: string[];
-  weaknesses: string[];
+  stats: Stats;
 }
 
 export interface CheckpointStep {
@@ -20,12 +19,6 @@ export interface CheckpointStep {
   status: 'cleared' | 'failed' | 'active' | 'pending';
   situation: string;
 }
-
-const STAT_SKILLS: Record<Stat, string> = {
-  stealth: 'stealth (sneaking, moving unseen)',
-  charm: 'charm (talking, persuasion, disguise)',
-  muscle: 'muscle (climbing, lifting, physical feats)',
-};
 
 @Component({
   selector: 'app-handler-dashboard',
@@ -64,7 +57,7 @@ export class HandlerDashboardComponent {
         id: npcSession.id,
         codename: `OPERATIVE: ${dossier.name.toUpperCase()}`,
         bio: dossier.bio,
-        ...describeStats(dossier),
+        stats: dossier.stats,
       })) ?? [],
   );
 
@@ -90,8 +83,6 @@ export class HandlerDashboardComponent {
     }
     return steps;
   });
-
-  protected readonly inspectedOperative = signal<Operative | null>(null);
 
   constructor() {
     inject(DestroyRef).onDestroy(() => this.missionService.stopPolling());
@@ -119,37 +110,11 @@ export class HandlerDashboardComponent {
     return this.callerId() === op.id;
   }
 
-  protected inspectOperative(op: Operative): void {
-    this.inspectedOperative.set(op);
-  }
-
-  protected closeDossier(): void {
-    this.inspectedOperative.set(null);
-  }
-
   protected async endMission(): Promise<void> {
     if (this.missionService.isRunning()) {
       await this.missionService.endMission();
     }
   }
-}
-
-/** Strengths and weaknesses from the operative's stats. */
-function describeStats({ stats }: Dossier): Pick<Operative, 'strengths' | 'weaknesses'> {
-  const strengths: string[] = [];
-  const weaknesses: string[] = [];
-  const best = topStat(stats);
-  for (const stat of Object.keys(stats) as Stat[]) {
-    const value = stats[stat];
-    if (stat === best || value >= 60) {
-      strengths.push(`+ Excels at ${STAT_SKILLS[stat]}: ${value}%`);
-    } else if (value > 40) {
-      strengths.push(`+ Capable at ${STAT_SKILLS[stat]}: ${value}%`);
-    } else {
-      weaknesses.push(`! Weak at ${STAT_SKILLS[stat]}: ${value}%`);
-    }
-  }
-  return { strengths, weaknesses };
 }
 
 function toStep(checkpoint: Checkpoint, number: number, operativeName: string): CheckpointStep {

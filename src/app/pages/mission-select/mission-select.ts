@@ -25,9 +25,24 @@ export class MissionSelectComponent {
     return user?.handle || user?.username || '';
   });
 
-  protected readonly dispatchPhone = computed(
-    () => this.userService.currentUser()?.phoneNumber ?? '',
+  protected readonly rawPhone = computed(
+    () => this.userService.currentUser()?.phoneNumber?.trim() ?? '',
   );
+
+  protected readonly revealPhone = signal(false);
+
+  protected readonly dispatchPhone = computed(() => {
+    const raw = this.rawPhone();
+    if (!raw) return '';
+    if (this.revealPhone()) {
+      return raw;
+    }
+    return '[••••••••••]';
+  });
+
+  protected togglePhoneReveal(): void {
+    this.revealPhone.update((v) => !v);
+  }
 
   protected readonly selectedMissionId = this.missionService.selectedMissionId;
   protected readonly scenarios = this.missionService.scenarios;

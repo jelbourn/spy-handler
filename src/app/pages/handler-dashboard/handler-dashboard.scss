@@ -50,8 +50,15 @@
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.3; }
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.3;
+  }
 }
 
 .mission-heading {
@@ -216,9 +223,17 @@
 }
 
 @keyframes needleVibe {
-  0% { transform: rotate(-25deg); }
-  50% { transform: rotate(10deg); }
-  100% { transform: rotate(-8deg); }
+  0% {
+    transform: rotate(-25deg);
+  }
+
+  50% {
+    transform: rotate(10deg);
+  }
+
+  100% {
+    transform: rotate(-8deg);
+  }
 }
 
 .hud-right {
@@ -243,6 +258,7 @@
 
   &.dymo-mini-crimson {
     background-color: #ba2d27;
+
     &:hover {
       background-color: #9c1f19;
     }
@@ -298,15 +314,15 @@
 
 .operative-badge-card {
   display: flex;
-  align-items: center;
-  gap: 0.75rem;
+  flex-direction: column;
+  gap: 0.55rem;
   background-color: #dfd5be;
   border: 1px solid #7c766b;
-  padding: 0.5rem 0.85rem;
-  cursor: pointer;
+  padding: 0.65rem 0.95rem;
+  min-width: 260px;
   box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.2);
   text-align: left;
-  transition: transform 0.1s ease;
+  transition: transform 0.1s ease, border-color 0.1s ease;
 
   &:hover {
     transform: translateY(-2px);
@@ -319,6 +335,12 @@
   }
 }
 
+.badge-top {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
 .badge-mugshot {
   width: 32px;
   height: 32px;
@@ -327,6 +349,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  flex-shrink: 0;
 
   .passport-icon {
     width: 24px;
@@ -337,6 +360,7 @@
 .badge-meta {
   display: flex;
   flex-direction: column;
+  gap: 0.15rem;
 }
 
 .badge-codename {
@@ -368,6 +392,42 @@
 
   &[data-status='standby'] {
     background-color: #e07a2c;
+  }
+}
+
+/* Operative Stats Row */
+.badge-stats {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  border-top: 1px dashed #b5ab98;
+  padding-top: 0.45rem;
+  margin-top: 0.15rem;
+}
+
+.stat-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-family: 'Courier Prime', monospace;
+  font-size: 0.7rem;
+  background-color: #ede3cc;
+  border: 1px solid #c2b49d;
+  padding: 0.15rem 0.45rem;
+  letter-spacing: 0.03em;
+
+  .stat-name {
+    font-weight: 700;
+    color: #444;
+  }
+
+  .stat-value {
+    font-weight: 700;
+    color: #ba2d27;
+
+    &.strength {
+      color: #276b3d;
+    }
   }
 }
 
@@ -541,145 +601,3 @@
     color: #2b2b2b;
   }
 }
-
-/* Dossier Modal */
-.modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background-color: rgba(20, 26, 22, 0.75);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 1.5rem;
-  z-index: 999;
-}
-
-.dossier-modal {
-  width: 100%;
-  max-width: 580px;
-  background-color: #ece3cd;
-  border: 2px solid #1a1a1a;
-  box-shadow: 8px 8px 0px rgba(0, 0, 0, 0.6);
-  padding: 1.5rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-bottom: 1px solid #7c766b;
-  padding-bottom: 0.5rem;
-
-  .modal-form-code {
-    font-family: 'Courier Prime', monospace;
-    font-size: 0.75rem;
-    font-weight: 700;
-    color: #333d45;
-  }
-
-  .close-stamp {
-    background: transparent;
-    border: none;
-    font-family: 'Courier Prime', monospace;
-    font-size: 0.8rem;
-    font-weight: 700;
-    color: #ba2d27;
-    cursor: pointer;
-  }
-}
-
-.modal-body {
-  display: flex;
-  gap: 1.5rem;
-}
-
-.modal-mugshot-col {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.4rem;
-
-  .modal-mugshot-frame {
-    width: 64px;
-    height: 64px;
-    background-color: #c9bea3;
-    border: 2px solid #111;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-
-    .passport-icon {
-      width: 48px;
-      height: 48px;
-    }
-  }
-
-  .modal-codename {
-    font-family: 'Courier Prime', monospace;
-    font-size: 0.82rem;
-    font-weight: 700;
-    color: #111;
-  }
-
-  .modal-classified-name {
-    font-family: 'Courier Prime', monospace;
-    font-size: 0.68rem;
-    color: #666;
-  }
-}
-
-.modal-details-col {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-
-  .section-label {
-    font-family: 'Courier Prime', monospace;
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.05em;
-    color: #333d45;
-  }
-
-  .dossier-list {
-    list-style: none;
-    display: flex;
-    flex-direction: column;
-    gap: 0.35rem;
-
-    li {
-      font-family: 'Courier Prime', monospace;
-      font-size: 0.8rem;
-      line-height: 1.35;
-      color: #111;
-    }
-  }
-
-  .weaknesses-list li {
-    color: #ba2d27;
-  }
-}
-
-.modal-footer {
-  display: flex;
-  justify-content: flex-end;
-  border-top: 1px solid #7c766b;
-  padding-top: 0.75rem;
-
-  .dymo-button {
-    background-color: #121212;
-    color: #fff;
-    border: none;
-    padding: 0.6rem 1rem;
-    font-family: 'Courier Prime', monospace;
-    font-size: 0.8rem;
-    font-weight: 700;
-    cursor: pointer;
-    box-shadow: 2px 2px 0px #000;
-  }
-}
-

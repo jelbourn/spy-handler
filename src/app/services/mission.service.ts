@@ -13,6 +13,7 @@ import { apiErrorMessage } from './user.service';
 export interface OperativePreview {
   codename: string;
   role: string;
+  stats?: Stats;
 }
 
 /** A scenario as shown on a mission card. */
@@ -173,6 +174,7 @@ function toMissionScenario(summary: ScenarioSummary): MissionScenario {
     operatives: summary.operatives.map((operative) => ({
       codename: operative.name.toUpperCase(),
       role: STAT_ROLES[topStat(operative.stats)],
+      stats: operative.stats,
     })),
   };
 }

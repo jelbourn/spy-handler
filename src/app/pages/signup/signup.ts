@@ -14,9 +14,9 @@ export class SignupComponent {
   private readonly router = inject(Router);
   private readonly userService = inject(UserService);
 
-  protected readonly handlerName = signal('dark_cloak');
-  protected readonly phone = signal('555-656-0000');
-  protected readonly passcode = signal('dsvkleb34234');
+  protected readonly handlerName = signal('');
+  protected readonly phone = signal('');
+  protected readonly passcode = signal('');
 
   protected readonly isSubmitting = this.userService.isRegistering;
   protected readonly errorMessage = signal<string | null>(null);

@@ -37,6 +37,24 @@
   color: #121212;
 }
 
+.phone-mask-btn {
+  background: transparent;
+  border: none;
+  padding: 0 0.25rem;
+  font-family: 'Courier Prime', monospace;
+  font-size: 0.82rem;
+  color: #1a1a1a;
+  cursor: pointer;
+  text-decoration: underline dotted #7c766b;
+  text-underline-offset: 2px;
+  transition: color 0.1s ease;
+
+  &:hover {
+    color: #ba2d27;
+    text-decoration: underline solid #ba2d27;
+  }
+}
+
 .telemetry-divider {
   color: #8c8577;
 }
@@ -78,47 +96,120 @@
   }
 }
 
-/* Active Operation Banner */
+/* Prominent Active Operation Banner */
 .active-operation-banner {
-  background-color: #222824;
-  border: 1px solid #ba2d27;
-  padding: 0.6rem 1rem;
+  background-color: #1e2421;
+  border: 2px solid #ba2d27;
+  padding: 1rem 1.25rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  box-shadow: 
+    4px 4px 0px rgba(186, 45, 39, 0.4),
+    6px 6px 0px rgba(0, 0, 0, 0.45);
+  font-family: 'Courier Prime', monospace;
+  margin-bottom: 0.25rem;
+}
+
+.banner-content {
+  display: flex;
+  align-items: center;
   gap: 1rem;
+  flex: 1 1 320px;
+}
+
+.warning-lamp {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background-color: #ba2d27;
+  box-shadow: 0 0 10px #ba2d27, 0 0 4px #fff;
+  flex-shrink: 0;
+  animation: warningPulse 1.2s infinite ease-in-out;
+}
+
+@keyframes warningPulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(0.85);
+  }
+}
+
+.banner-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.banner-heading-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.banner-alert-tag {
+  color: #ba2d27;
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+}
+
+.banner-time {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #e07a2c;
+  background-color: #111;
+  padding: 0.1rem 0.4rem;
+  border: 1px solid #333;
+}
+
+.banner-summary {
+  font-size: 0.82rem;
+  line-height: 1.4;
+  color: #d8cfbe;
+
+  strong {
+    color: #fff;
+    font-weight: 700;
+  }
+}
+
+.dymo-resume-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: #ba2d27;
+  color: #ffffff;
+  padding: 0.65rem 1rem;
   font-family: 'Courier Prime', monospace;
   font-size: 0.85rem;
-  color: #f2e8d5;
-  box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.5);
+  font-weight: 700;
+  text-decoration: none;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  box-shadow: 2px 2px 0px #000;
+  transition: transform 0.08s ease, box-shadow 0.08s ease, background-color 0.1s ease;
 
-  .banner-pip {
-    color: #ba2d27;
-    font-weight: 700;
+  .button-pip {
+    color: #f7d5d3;
+    font-size: 0.7rem;
+    line-height: 1;
   }
 
-  .banner-text {
-    flex: 1;
-
-    strong {
-      color: #faf6ee;
-    }
+  &:hover {
+    background-color: #9c231e;
   }
 
-  .dymo-mini-resume-btn {
-    background-color: #ba2d27;
-    color: #fff;
-    padding: 0.35rem 0.65rem;
-    font-size: 0.75rem;
-    font-weight: 700;
-    text-decoration: none;
-    letter-spacing: 0.05em;
-    white-space: nowrap;
-    box-shadow: 1px 1px 0px rgba(0, 0, 0, 0.4);
-
-    &:hover {
-      background-color: #9c231e;
-    }
+  &:active {
+    transform: translate(2px, 2px);
+    box-shadow: 0px 0px 0px #000;
   }
 }
 
@@ -158,8 +249,7 @@
   padding: 1.25rem;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  gap: 0.85rem;
+  height: 100%;
   cursor: pointer;
   box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.25);
   transition: transform 0.1s ease, box-shadow 0.1s ease, border-color 0.1s ease;
@@ -194,6 +284,12 @@
   }
 }
 
+.card-header-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
 .card-top {
   display: flex;
   justify-content: space-between;
@@ -208,30 +304,6 @@
   letter-spacing: 0.05em;
 }
 
-.threat-tag {
-  font-family: 'Courier Prime', monospace;
-  font-size: 0.7rem;
-  font-weight: 700;
-  padding: 0.15rem 0.45rem;
-  border: 1px solid #111;
-  letter-spacing: 0.05em;
-
-  &[data-threat='DEFCON 1'] {
-    background-color: #ba2d27;
-    color: #fff;
-  }
-
-  &[data-threat='DEFCON 2'] {
-    background-color: #e07a2c;
-    color: #fff;
-  }
-
-  &[data-threat='DEFCON 3'] {
-    background-color: #dfd5be;
-    color: #111;
-  }
-}
-
 .scenario-title {
   font-family: 'Oswald', sans-serif;
   font-size: 1.35rem;
@@ -239,21 +311,23 @@
   line-height: 1.15;
   color: #121212;
   letter-spacing: 0.03em;
-}
-
-.theater-text {
-  font-family: 'Courier Prime', monospace;
-  font-size: 0.78rem;
-  font-weight: 700;
-  color: #333d45;
-  letter-spacing: 0.05em;
-  margin-top: -0.5rem;
+  min-height: 2.7rem;
+  display: flex;
+  align-items: center;
 }
 
 .card-rule {
   border: none;
   border-top: 1px dashed #928e83;
-  margin: 0;
+  margin: 0.25rem 0 0.5rem;
+}
+
+/* Briefing flex container */
+.briefing-container {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 1.25rem;
 }
 
 .briefing-text {
@@ -261,6 +335,13 @@
   font-size: 0.82rem;
   line-height: 1.45;
   color: #222;
+}
+
+.card-bottom-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  margin-top: auto;
 }
 
 /* Operatives Assigned */
