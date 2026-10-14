@@ -9,7 +9,8 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "typecheck": "tsc -p server/tsconfig.json"
+    "typecheck": "tsc -p server/tsconfig.json",
+    "db:reset": "tsx --env-file-if-exists=.env server/db/reset.ts"
   },
   "private": true,
   "type": "module",
@@ -22,6 +23,8 @@
     "@angular/platform-browser": "^22.2.0",
     "@angular/router": "^22.2.0",
     "@hono/node-server": "^2.1.5",
+    "better-sqlite3": "^13.0.3",
+    "drizzle-orm": "^0.45.4",
     "hono": "^4.13.13",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"
@@ -30,8 +33,10 @@
     "@angular/build": "^22.2.2",
     "@angular/cli": "^22.2.2",
     "@angular/compiler-cli": "^22.2.0",
+    "@types/better-sqlite3": "^9.6.0",
     "@types/node": "^26.6.5",
     "concurrently": "^10.0.6",
+    "drizzle-kit": "^0.31.11",
     "prettier": "^3.8.1",
     "tsx": "^4.23.15",
     "typescript": "~6.0.2"
