@@ -10,7 +10,8 @@
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "typecheck": "tsc -p server/tsconfig.json",
-    "db:reset": "tsx --env-file-if-exists=.env server/db/reset.ts"
+    "db:reset": "tsx --env-file-if-exists=.env server/db/reset.ts",
+    "test:e2e": "tsx server/test/e2e.ts"
   },
   "private": true,
   "type": "module",

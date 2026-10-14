@@ -8,10 +8,12 @@ import type {
   WebhookEvent,
 } from './types.ts';
 
-/** Time from placing the call until the "player" gives an order. */
-const DECISION_DELAY_MS = 5_000;
-/** Time from the order until the call ends and the post-call webhook arrives. */
-const HANG_UP_DELAY_MS = 3_000;
+export interface FakeElevenLabsOptions {
+  /** Time from placing the call until the "player" gives an order. Defaults to 5 seconds. */
+  decisionDelayMs?: number;
+  /** Time from the order until the call ends and the webhook arrives. Defaults to 3 seconds. */
+  hangUpDelayMs?: number;
+}
 
 /**
  * Stands in for ElevenLabs in development, so no calls are placed and no credit is used. Each call
@@ -21,6 +23,13 @@ const HANG_UP_DELAY_MS = 3_000;
 export class FakeElevenLabs implements OutboundCaller {
   /** Where the tool call and webhook are sent; the server itself, so no tunnel is needed. */
   private readonly serverUrl = `http://localhost:${config.port}`;
+  private readonly decisionDelayMs: number;
+  private readonly hangUpDelayMs: number;
+
+  constructor(options: FakeElevenLabsOptions = {}) {
+    this.decisionDelayMs = options.decisionDelayMs ?? 5_000;
+    this.hangUpDelayMs = options.hangUpDelayMs ?? 3_000;
+  }
 
   async outboundCall(request: OutboundCallRequest): Promise<OutboundCallResponse> {
     const conversationId = `fake_conv_${randomUUID()}`;
@@ -41,7 +50,7 @@ export class FakeElevenLabs implements OutboundCaller {
       { role: 'agent', message: variables.situation },
     ];
 
-    await sleep(DECISION_DELAY_MS);
+    await sleep(this.decisionDelayMs);
     let summary = `${variables.npc_name} reported the outcome of their mission.`;
     const choiceIds = parseChoiceIds(variables.choices);
     // An ending has no choices: the operative just reports it.
@@ -53,7 +62,7 @@ export class FakeElevenLabs implements OutboundCaller {
       summary = `${variables.npc_name} briefed the handler, who ordered ${choiceId}.`;
     }
 
-    await sleep(HANG_UP_DELAY_MS);
+    await sleep(this.hangUpDelayMs);
     await this.sendWebhook({
       type: 'post_call_transcription',
       event_timestamp: Math.floor(Date.now() / 1000),
