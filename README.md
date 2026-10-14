@@ -138,8 +138,8 @@ and voice IDs aren't secret: they're checked in as the scenario's `agentId` and 
    (not the number) to `ELEVENLABS_PHONE_NUMBER_ID`.
 2. Create an agent and put its ID in the scenario as `agentId`, and each operative's voice ID as
    their `voiceId` (then run `npm run db:reset`). Its system prompt should use the
-   dynamic variables the server sends: `{{npc_name}}`, `{{persona}}`, `{{scenario}}`,
-   `{{situation}}` and `{{choices}}` (one `- id: description` per line).
+   dynamic variables the server sends: `{{npc_name}}`, `{{handle}}` (the player's handle),
+   `{{persona}}`, `{{scenario}}`, `{{situation}}` and `{{choices}}` (one `- id: description` per line).
    `{{npc_session_id}}` and `{{npc_call_id}}` are also sent, for the tool. When `{{choices}}` is
    empty, the mission has ended: the prompt should tell the agent to report `{{situation}}` and
    hang up.
@@ -164,7 +164,7 @@ as ISO-8601 strings. GameTemplate and NpcTemplate rows are seeded from `server/s
 |-------------|--------|-------------------------------------------------------------|
 | id          | int    |                                                             |
 | username    | string | unique                                                      |
-| handle      | string |                                                             |
+| handle      | string | Sent to the agent as `{{handle}}`                           |
 | phoneNumber | string | unique; E.164 (`+15555550100`). Operatives call this number |
 
 | GameTemplate    |        |                                                                                                |

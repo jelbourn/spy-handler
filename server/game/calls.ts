@@ -81,6 +81,7 @@ export async function placeNextCall(
       conversationInitiationClientData: {
         dynamicVariables: {
           npc_name: npc.name,
+          handle: user.handle,
           persona: npc.persona,
           scenario: template.scenario,
           situation: node.situation,
@@ -96,8 +97,8 @@ export async function placeNextCall(
           agent: {
             firstMessage:
               node.type === 'ending'
-                ? `Handler, it's ${npc.name}. I have news.`
-                : `Handler, it's ${npc.name}. We have a problem.`,
+                ? `${user.handle}, it's ${npc.name}. I have news.`
+                : `${user.handle}, it's ${npc.name}. We have a problem.`,
           },
           tts: { speed: VOICE_SPEED, ...(npc.voiceId ? { voiceId: npc.voiceId } : {}) },
         },

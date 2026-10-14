@@ -44,7 +44,7 @@ export class FakeElevenLabs implements OutboundCaller {
     const variables = request.conversationInitiationClientData.dynamicVariables;
     const firstMessage =
       request.conversationInitiationClientData.conversationConfigOverride?.agent?.firstMessage ??
-      `Handler, it's ${variables.npc_name}.`;
+      `${variables.handle}, it's ${variables.npc_name}.`;
     const transcript: { role: 'agent' | 'user'; message: string }[] = [
       { role: 'agent', message: firstMessage },
       { role: 'agent', message: variables.situation },

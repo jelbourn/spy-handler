@@ -6,6 +6,8 @@
 /** Values substituted into the agent's prompt, first message and tool parameters. */
 export interface OperativeCallVariables {
   npc_name: string;
+  /** The player's `User.handle`, for the operative to address them by. */
+  handle: string;
   persona: string;
   scenario: string;
   /** The current node's briefing. On an ending, the outcome to report. */
