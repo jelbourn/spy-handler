@@ -32,7 +32,7 @@ const BETWEEN_CALLS_DELAY_MS = 60_000;
 /** Time the operative gets to acknowledge an order before the server hangs up. */
 const HANG_UP_AFTER_DECISION_MS = 10_000;
 /** Speech speed for every operative (1 is normal; ElevenLabs allows 0.7 to 1.2). */
-const VOICE_SPEED = 1.1;
+const VOICE_SPEED = 1.2;
 
 /**
  * Has the next operative call the player about the mission's current node. A call that can't be
