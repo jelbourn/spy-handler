@@ -78,6 +78,50 @@
   }
 }
 
+/* Active Operation Banner */
+.active-operation-banner {
+  background-color: #222824;
+  border: 1px solid #ba2d27;
+  padding: 0.6rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  font-family: 'Courier Prime', monospace;
+  font-size: 0.85rem;
+  color: #f2e8d5;
+  box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.5);
+
+  .banner-pip {
+    color: #ba2d27;
+    font-weight: 700;
+  }
+
+  .banner-text {
+    flex: 1;
+
+    strong {
+      color: #faf6ee;
+    }
+  }
+
+  .dymo-mini-resume-btn {
+    background-color: #ba2d27;
+    color: #fff;
+    padding: 0.35rem 0.65rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-decoration: none;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+    box-shadow: 1px 1px 0px rgba(0, 0, 0, 0.4);
+
+    &:hover {
+      background-color: #9c231e;
+    }
+  }
+}
+
 /* Section Title */
 .section-banner {
   .section-title {
@@ -315,17 +359,25 @@
   justify-content: center;
   gap: 0.5rem;
   border: none;
-  padding: 0.65rem 1rem;
+  padding: 0.75rem 0.6rem;
   font-family: 'Courier Prime', monospace;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
   cursor: pointer;
   box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.4);
   transition: transform 0.08s ease, box-shadow 0.08s ease;
 
   .button-pip {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
+    flex-shrink: 0;
+    line-height: 1;
+  }
+
+  .button-text {
+    flex-shrink: 0;
+    white-space: nowrap;
   }
 
   &.dymo-button-active {

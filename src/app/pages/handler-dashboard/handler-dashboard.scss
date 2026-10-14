@@ -1,0 +1,676 @@
+:host {
+  display: block;
+  width: 100%;
+}
+
+.dashboard-content {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Top Operations Header */
+.ops-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  background-color: #dfd5be;
+  border: 1px solid #7c766b;
+  padding: 0.75rem 1.25rem;
+  box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.live-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: 'Courier Prime', monospace;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #ba2d27;
+  letter-spacing: 0.08em;
+}
+
+.pulse-lamp {
+  width: 8px;
+  height: 8px;
+  background-color: #ba2d27;
+  border-radius: 50%;
+  box-shadow: 0 0 6px #ba2d27;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.mission-heading {
+  font-family: 'Oswald', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1;
+  color: #121212;
+  letter-spacing: 0.04em;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.mission-clock-box {
+  background-color: #1a1a1a;
+  border: 1px solid #444;
+  padding: 0.35rem 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  .clock-label {
+    font-family: 'Courier Prime', monospace;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #888;
+  }
+
+  .nixie-digits {
+    font-family: 'Courier Prime', monospace;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #e07a2c;
+    text-shadow: 0 0 6px rgba(224, 122, 44, 0.8);
+    letter-spacing: 0.1em;
+  }
+}
+
+.abort-switch {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  text-decoration: none;
+  background-color: #ba2d27;
+  color: #fff;
+  border: 1px solid #111;
+  padding: 0.35rem 0.75rem;
+  font-family: 'Courier Prime', monospace;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  box-shadow: 2px 2px 0px #000;
+  cursor: pointer;
+
+  .switch-guard {
+    font-size: 0.55rem;
+    color: #f7d5d3;
+  }
+
+  &:hover {
+    background-color: #9c1f19;
+  }
+}
+
+/* Live Call HUD */
+.live-call-hud {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  background-color: #f4efe2;
+  border: 2px solid #276b3d;
+  padding: 1rem 1.25rem;
+  box-shadow: 4px 4px 0px rgba(39, 107, 61, 0.3);
+}
+
+.hud-left {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.jeweled-pilot-lamp {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid #555;
+  background: radial-gradient(circle at 35% 35%, #86efac, #16a34a, #14532d);
+  box-shadow: 0 0 8px rgba(22, 163, 74, 0.8);
+}
+
+.hud-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.hud-label {
+  font-family: 'Courier Prime', monospace;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #276b3d;
+  letter-spacing: 0.05em;
+}
+
+.hud-caller {
+  font-family: 'Oswald', sans-serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #121212;
+  letter-spacing: 0.03em;
+}
+
+/* Analog VU Meter */
+.vu-meter-box {
+  background-color: #e5dac2;
+  border: 1px solid #7c766b;
+  padding: 0.4rem 0.8rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  box-shadow: inset 1px 1px 3px rgba(0, 0, 0, 0.2);
+
+  .vu-label {
+    font-family: 'Courier Prime', monospace;
+    font-size: 0.6rem;
+    font-weight: 700;
+    color: #444;
+    letter-spacing: 0.08em;
+  }
+
+  .vu-scale {
+    position: relative;
+    width: 80px;
+    height: 18px;
+    border-bottom: 2px solid #333;
+    overflow: hidden;
+
+    .needle {
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      width: 2px;
+      height: 16px;
+      background-color: #ba2d27;
+      transform-origin: bottom center;
+      animation: needleVibe 0.45s ease-in-out infinite alternate;
+    }
+  }
+
+  .vu-units {
+    font-family: 'Courier Prime', monospace;
+    font-size: 0.55rem;
+    color: #666;
+  }
+}
+
+@keyframes needleVibe {
+  0% { transform: rotate(-25deg); }
+  50% { transform: rotate(10deg); }
+  100% { transform: rotate(-8deg); }
+}
+
+.hud-right {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.dymo-mini-button {
+  background-color: #121212;
+  color: #fff;
+  border: none;
+  padding: 0.5rem 0.75rem;
+  font-family: 'Courier Prime', monospace;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 2px 2px 0px #000;
+
+  &:hover {
+    background-color: #222;
+  }
+
+  &.dymo-mini-crimson {
+    background-color: #ba2d27;
+    &:hover {
+      background-color: #9c1f19;
+    }
+  }
+}
+
+/* Switchboard */
+.operative-switchboard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.switchboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.switchboard-title {
+  font-family: 'Courier Prime', monospace;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: #444;
+}
+
+.stub-toggle-btn {
+  background: transparent;
+  border: 1px dashed #7c766b;
+  color: #333d45;
+  font-family: 'Courier Prime', monospace;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.2rem 0.5rem;
+  cursor: pointer;
+  transition: all 0.1s ease;
+
+  &:hover {
+    border-color: #276b3d;
+    color: #276b3d;
+    background-color: #dfd5be;
+  }
+}
+
+.badge-row {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.operative-badge-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background-color: #dfd5be;
+  border: 1px solid #7c766b;
+  padding: 0.5rem 0.85rem;
+  cursor: pointer;
+  box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.2);
+  text-align: left;
+  transition: transform 0.1s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    border-color: #ba2d27;
+  }
+
+  &.calling {
+    background-color: #e8f5e9;
+    border: 2px solid #276b3d;
+  }
+}
+
+.badge-mugshot {
+  width: 32px;
+  height: 32px;
+  background-color: #c9bea3;
+  border: 1px solid #111;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  .passport-icon {
+    width: 24px;
+    height: 24px;
+  }
+}
+
+.badge-meta {
+  display: flex;
+  flex-direction: column;
+}
+
+.badge-codename {
+  font-family: 'Courier Prime', monospace;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #111;
+}
+
+.badge-status {
+  font-family: 'Courier Prime', monospace;
+  font-size: 0.68rem;
+  color: #555;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.status-indicator-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+
+  &[data-status='in-call'] {
+    background-color: #276b3d;
+    box-shadow: 0 0 4px #276b3d;
+  }
+
+  &[data-status='standby'] {
+    background-color: #e07a2c;
+  }
+}
+
+/* Checkpoints Timeline */
+.checkpoint-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.timeline-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+
+  .timeline-title {
+    font-family: 'Oswald', sans-serif;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #111;
+    letter-spacing: 0.04em;
+  }
+
+  .timeline-sub {
+    font-family: 'Courier Prime', monospace;
+    font-size: 0.7rem;
+    color: #666;
+  }
+}
+
+.checkpoint-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.checkpoint-card {
+  background-color: #f7f1e1;
+  border: 1px solid #7c766b;
+  padding: 0.4rem 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.12);
+
+  &.cleared {
+    background-color: #ede7d5;
+    opacity: 0.85;
+
+    .checkpoint-desc {
+      text-decoration: line-through;
+      color: #777;
+    }
+  }
+
+  &.active {
+    border: 2px solid #ba2d27;
+    background-color: #fcf9f2;
+    box-shadow: 3px 3px 0px rgba(186, 45, 39, 0.25);
+
+    .checkpoint-tag {
+      color: #ba2d27;
+      font-weight: 700;
+    }
+  }
+
+  &.pending {
+    background-color: #e7dfcc;
+    opacity: 0.65;
+
+    .checkpoint-tag {
+      color: #666;
+    }
+  }
+}
+
+.checkpoint-line {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.checkpoint-tag {
+  font-family: 'Courier Prime', monospace;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #ba2d27;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.checkpoint-name {
+  font-family: 'Oswald', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #111;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.checkpoint-desc {
+  font-family: 'Courier Prime', monospace;
+  font-size: 0.78rem;
+  color: #3f474a;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+
+.assigned-agent {
+  font-family: 'Courier Prime', monospace;
+  font-size: 0.72rem;
+  color: #555;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.intel-toggle-button {
+  background: transparent;
+  border: 1px dashed #7c766b;
+  padding: 0.15rem 0.45rem;
+  font-family: 'Courier Prime', monospace;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #333d45;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all 0.1s ease;
+
+  &:hover {
+    background-color: #dfd5be;
+    color: #ba2d27;
+    border-color: #ba2d27;
+  }
+}
+
+.intel-notes-body {
+  margin-top: 0.5rem;
+  background-color: #fff9e6;
+  border-left: 3px solid #e07a2c;
+  padding: 0.6rem 0.85rem;
+  font-family: 'Courier Prime', monospace;
+
+  .intel-stamp {
+    display: block;
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: #e07a2c;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.25rem;
+  }
+
+  .intel-text {
+    font-size: 0.8rem;
+    line-height: 1.4;
+    color: #2b2b2b;
+  }
+}
+
+/* Dossier Modal */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(20, 26, 22, 0.75);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1.5rem;
+  z-index: 999;
+}
+
+.dossier-modal {
+  width: 100%;
+  max-width: 580px;
+  background-color: #ece3cd;
+  border: 2px solid #1a1a1a;
+  box-shadow: 8px 8px 0px rgba(0, 0, 0, 0.6);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #7c766b;
+  padding-bottom: 0.5rem;
+
+  .modal-form-code {
+    font-family: 'Courier Prime', monospace;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #333d45;
+  }
+
+  .close-stamp {
+    background: transparent;
+    border: none;
+    font-family: 'Courier Prime', monospace;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #ba2d27;
+    cursor: pointer;
+  }
+}
+
+.modal-body {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.modal-mugshot-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+
+  .modal-mugshot-frame {
+    width: 64px;
+    height: 64px;
+    background-color: #c9bea3;
+    border: 2px solid #111;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    .passport-icon {
+      width: 48px;
+      height: 48px;
+    }
+  }
+
+  .modal-codename {
+    font-family: 'Courier Prime', monospace;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #111;
+  }
+
+  .modal-classified-name {
+    font-family: 'Courier Prime', monospace;
+    font-size: 0.68rem;
+    color: #666;
+  }
+}
+
+.modal-details-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+
+  .section-label {
+    font-family: 'Courier Prime', monospace;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    color: #333d45;
+  }
+
+  .dossier-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+
+    li {
+      font-family: 'Courier Prime', monospace;
+      font-size: 0.8rem;
+      line-height: 1.35;
+      color: #111;
+    }
+  }
+
+  .weaknesses-list li {
+    color: #ba2d27;
+  }
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  border-top: 1px solid #7c766b;
+  padding-top: 0.75rem;
+
+  .dymo-button {
+    background-color: #121212;
+    color: #fff;
+    border: none;
+    padding: 0.6rem 1rem;
+    font-family: 'Courier Prime', monospace;
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 2px 2px 0px #000;
+  }
+}
+

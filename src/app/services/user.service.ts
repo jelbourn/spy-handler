@@ -32,6 +32,7 @@ export class UserService {
         id: Math.floor(Math.random() * 1000) + 1,
         username: request.username.trim(),
         phoneNumber: normalizedPhone,
+        handle: request.handle.trim(),
       };
 
       this.currentUser.set(mockUser);

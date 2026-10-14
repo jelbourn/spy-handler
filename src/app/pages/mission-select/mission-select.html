@@ -13,6 +13,12 @@
       <span class="telemetry-item status-armed">
         <span class="status-pip">■</span> STATION ARMED
       </span>
+      @if (isRunning()) {
+      <span class="telemetry-divider">|</span>
+      <span class="telemetry-item status-armed">
+        <span class="status-pip">●</span> ACTIVE: {{ missionClock() }}
+      </span>
+      }
     </div>
 
     <nav class="bureau-sub-nav">
@@ -20,6 +26,17 @@
       <a routerLink="/history" class="nav-link">[ ARCHIVES (HISTORY) ]</a>
     </nav>
   </header>
+
+  <!-- Active Operation Banner if session is underway -->
+  @if (isRunning()) {
+  <aside class="active-operation-banner" role="status">
+    <span class="banner-pip" aria-hidden="true">▲</span>
+    <span class="banner-text">
+      LINE ENGAGED: <strong>{{ activeMission()?.name }}</strong> IS CURRENTLY UNDERWAY (TIME: {{ missionClock() }})
+    </span>
+    <a routerLink="/active-mission" class="dymo-mini-resume-btn">[ RETURN TO RUNNING OPERATION ]</a>
+  </aside>
+  }
 
   <!-- Section Title -->
   <div class="section-banner">
@@ -84,14 +101,15 @@
       <div class="card-action">
         @if (selectedMissionId() === scenario.id) {
         <button type="button" class="dymo-button dymo-button-active"
-          (click)="launchMission(scenario.id); $event.stopPropagation()">
+          (click)="launchMission(scenario); $event.stopPropagation()">
           <span class="button-pip" aria-hidden="true">■</span>
-          <span class="button-text">[ CHOOSE ]</span>
+          <span class="button-text">[ START MISSION ]</span>
           <span class="button-pip" aria-hidden="true">■</span>
         </button>
         } @else {
-        <button type="button" class="dymo-button-ghost" (click)="selectMission(scenario.id); $event.stopPropagation()">
-          [ CHOOSE ]
+        <button type="button" class="dymo-button-ghost"
+          (click)="launchMission(scenario); $event.stopPropagation()">
+          [ CHOOSE MISSION ]
         </button>
         }
       </div>

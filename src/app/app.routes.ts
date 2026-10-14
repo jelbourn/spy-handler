@@ -19,6 +19,13 @@ export const routes: Routes = [
       ),
   },
   {
+    path: 'active-mission',
+    loadComponent: () =>
+      import('./pages/handler-dashboard/handler-dashboard').then(
+        (m) => m.HandlerDashboardComponent
+      ),
+  },
+  {
     path: '**',
     redirectTo: '',
   },

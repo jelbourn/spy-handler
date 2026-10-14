@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { UserService } from '../../services/user.service';
+import { CreateUserRequest } from '../../../../shared/models';
 
 @Component({
   selector: 'app-signup',
@@ -13,7 +14,7 @@ export class SignupComponent {
   private readonly router = inject(Router);
   private readonly userService = inject(UserService);
 
-  protected readonly handlerName = signal('mark@omb.agency');
+  protected readonly handlerName = signal('dark_cloak');
   protected readonly phone = signal('555-656-0000');
   protected readonly passcode = signal('dsvkleb34234');
 
@@ -26,17 +27,19 @@ export class SignupComponent {
 
     const username = this.handlerName().trim();
     const phoneNumber = this.phone().trim();
+    const handle = this.handlerName().trim();
 
     if (!username || !phoneNumber) {
       this.errorMessage.set('All identification fields must be completed.');
       return;
     }
 
+    const userRequest: CreateUserRequest = {
+      username, phoneNumber, handle
+    }
+
     try {
-      await this.userService.registerUser({
-        username,
-        phoneNumber,
-      });
+      await this.userService.registerUser(userRequest);
 
       // Navigate to mission requisition on success
       await this.router.navigate(['/missions']);
