@@ -27,8 +27,13 @@ import { pickNextCaller } from './turn-order.ts';
 // Placeholder pacing; tune once the game is playable.
 /** Delay before the first operative calls after a session starts. */
 export const FIRST_CALL_DELAY_MS = 15_000;
-/** Gap between one call ending and the next operative calling. */
-const BETWEEN_CALLS_DELAY_MS = 60_000;
+/**
+ * Gap between a call where the handler gave an order and the next call. The scheduler checks every
+ * 5 seconds, so the next call comes 10 to 15 seconds after this one ends.
+ */
+const AFTER_ORDER_DELAY_MS = 10_000;
+/** Gap after a call that ended without an order (missed, or no clear decision). */
+const AFTER_NO_ORDER_DELAY_MS = 60_000;
 /** Time the operative gets to acknowledge an order before the server hangs up. */
 const HANG_UP_AFTER_DECISION_MS = 10_000;
 /** Speech speed for every operative (1 is normal; ElevenLabs allows 0.7 to 1.2). */
@@ -219,18 +224,20 @@ export function finishCall(
     endGameSession(game.id, 'success');
     return call;
   }
-  if (!call.decision) {
-    attemptChallenge({
-      gameSessionId: game.id,
-      npcSessionId: npcSession.id,
-      stats: npc.stats,
-      node: calledAbout,
-      challengeId: tossCoin(calledAbout).id,
-      pickedBy: 'operative',
-      callId: call.id,
-    });
+  if (call.decision) {
+    scheduleNextCall(game.id, AFTER_ORDER_DELAY_MS);
+    return call;
   }
-  scheduleNextCall(game.id, BETWEEN_CALLS_DELAY_MS);
+  attemptChallenge({
+    gameSessionId: game.id,
+    npcSessionId: npcSession.id,
+    stats: npc.stats,
+    node: calledAbout,
+    challengeId: tossCoin(calledAbout).id,
+    pickedBy: 'operative',
+    callId: call.id,
+  });
+  scheduleNextCall(game.id, AFTER_NO_ORDER_DELAY_MS);
   return call;
 }
 
