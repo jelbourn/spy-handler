@@ -35,8 +35,22 @@ export class HandlerDashboardComponent {
   protected readonly missionClock = this.missionService.formattedElapsedTime;
   protected readonly isRunning = this.missionService.isRunning;
   protected readonly missionCodename = computed(() => this.detail()?.title.toUpperCase() ?? '');
+  protected readonly rawStatus = computed(() => this.detail()?.status ?? 'in-progress');
+
+  protected readonly missionStatusBadge = computed(() => {
+    switch (this.rawStatus()) {
+      case 'success':
+        return '[ACCOMPLISHED]';
+      case 'failure':
+        return '[FAILED]';
+      case 'in-progress':
+      default:
+        return '[PENDING]';
+    }
+  });
+
   protected readonly missionStatus = computed(() => {
-    switch (this.detail()?.status) {
+    switch (this.rawStatus()) {
       case 'success':
         return 'MISSION ACCOMPLISHED';
       case 'failure':

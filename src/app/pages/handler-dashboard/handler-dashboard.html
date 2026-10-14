@@ -6,7 +6,12 @@
         <span class="pulse-lamp" aria-hidden="true"></span>
         {{ missionStatus() }}
       </span>
-      <h2 class="mission-heading">{{ missionCodename() }}</h2>
+      <h2 class="mission-heading">
+        {{ missionCodename() }}:
+        <span class="mission-status-badge" [attr.data-status]="rawStatus()">
+          {{ missionStatusBadge() }}
+        </span>
+      </h2>
     </div>
 
     <div class="header-right">

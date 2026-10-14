@@ -181,6 +181,52 @@
   }
 }
 
+.banner-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.dymo-abandon-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: #111111;
+  color: #f7d5d3;
+  border: 1px solid #ba2d27;
+  padding: 0.65rem 0.9rem;
+  font-family: 'Courier Prime', monospace;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  box-shadow: 2px 2px 0px #000;
+  cursor: pointer;
+  transition: transform 0.08s ease, box-shadow 0.08s ease, background-color 0.1s ease;
+
+  .button-pip {
+    color: #ba2d27;
+    font-size: 0.7rem;
+    line-height: 1;
+  }
+
+  &:hover:not(:disabled) {
+    background-color: #2b1717;
+    color: #fff;
+  }
+
+  &:active:not(:disabled) {
+    transform: translate(2px, 2px);
+    box-shadow: 0px 0px 0px #000;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: wait;
+  }
+}
+
 .dymo-resume-btn {
   display: inline-flex;
   align-items: center;
@@ -250,38 +296,7 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  cursor: pointer;
   box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.25);
-  transition: transform 0.1s ease, box-shadow 0.1s ease, border-color 0.1s ease;
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 6px 6px 0px rgba(0, 0, 0, 0.35);
-  }
-
-  &.selected {
-    border-color: #ba2d27;
-    background-color: #fcf9f2;
-    box-shadow: 
-      5px 5px 0px rgba(186, 45, 39, 0.4),
-      8px 8px 0px rgba(0, 0, 0, 0.3);
-
-    &::after {
-      content: 'PRIORITY SELECTION';
-      position: absolute;
-      top: -10px;
-      right: 12px;
-      background-color: #ba2d27;
-      color: #faf6ee;
-      font-family: 'Courier Prime', monospace;
-      font-size: 0.65rem;
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      padding: 0.15rem 0.45rem;
-      border: 1px solid #1a1a1a;
-      box-shadow: 1px 1px 0px #000;
-    }
-  }
 }
 
 .card-header-section {
@@ -493,10 +508,18 @@
   cursor: pointer;
   transition: background-color 0.1s ease, color 0.1s ease;
 
-  &:hover {
+  &:hover:not(:disabled) {
     background-color: #dfd5be;
     color: #ba2d27;
     border-color: #ba2d27;
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    background-color: #e5ded0;
+    border-color: #928e83;
+    color: #666;
   }
 }
 

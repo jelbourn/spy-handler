@@ -65,9 +65,43 @@
   font-family: 'Oswald', sans-serif;
   font-size: 1.5rem;
   font-weight: 700;
-  line-height: 1;
+  line-height: 1.15;
   color: #121212;
   letter-spacing: 0.04em;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.mission-status-badge {
+  font-family: 'Courier Prime', monospace;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 0.15rem 0.5rem;
+  border: 1px solid #111;
+  background-color: #f7f1e1;
+  box-shadow: 1px 1px 0px #000;
+  color: #ba2d27;
+
+  &[data-status='success'] {
+    color: #276b3d;
+    border-color: #276b3d;
+    background-color: #e8f5e9;
+  }
+
+  &[data-status='failure'] {
+    color: #ba2d27;
+    border-color: #ba2d27;
+    background-color: #ffebee;
+  }
+
+  &[data-status='in-progress'] {
+    color: #ba2d27;
+    border-color: #ba2d27;
+    background-color: #fff9e6;
+  }
 }
 
 .header-right {

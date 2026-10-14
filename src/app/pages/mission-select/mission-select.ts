@@ -44,12 +44,12 @@ export class MissionSelectComponent {
     this.revealPhone.update((v) => !v);
   }
 
-  protected readonly selectedMissionId = this.missionService.selectedMissionId;
   protected readonly scenarios = this.missionService.scenarios;
   protected readonly isRunning = this.missionService.isRunning;
   protected readonly activeMission = this.missionService.activeMission;
   protected readonly missionClock = this.missionService.formattedElapsedTime;
   protected readonly isLaunching = signal(false);
+  protected readonly isEnding = signal(false);
   protected readonly errorMessage = signal<string | null>(null);
 
   constructor() {
@@ -62,10 +62,6 @@ export class MissionSelectComponent {
       this.missionService.loadScenarios(),
       this.missionService.loadActiveSession(user.id),
     ]).catch(() => this.errorMessage.set('Could not reach the dispatch office.'));
-  }
-
-  protected selectMission(id: number): void {
-    this.missionService.selectMission(id);
   }
 
   protected async launchMission(scenario: MissionScenario): Promise<void> {
@@ -82,6 +78,21 @@ export class MissionSelectComponent {
       this.errorMessage.set(err instanceof Error ? err.message : 'Dispatch failed.');
     } finally {
       this.isLaunching.set(false);
+    }
+  }
+
+  protected async abandonMission(): Promise<void> {
+    if (this.isEnding()) {
+      return;
+    }
+    this.isEnding.set(true);
+    this.errorMessage.set(null);
+    try {
+      await this.missionService.endMission();
+    } catch (err: unknown) {
+      this.errorMessage.set(err instanceof Error ? err.message : 'Could not abort mission.');
+    } finally {
+      this.isEnding.set(false);
     }
   }
 }
