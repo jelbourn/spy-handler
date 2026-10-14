@@ -13,13 +13,17 @@ const E164 = /^\+[1-9]\d{1,14}$/;
  * number is taken.
  */
 export async function createUser(c: Context) {
-  const { username, handle, phoneNumber } = await c.req
+  const body = await c.req
     .json<Partial<CreateUserRequest>>()
     .catch((): Partial<CreateUserRequest> => ({}));
-  if (typeof username !== 'string' || !username.trim()) {
+  // Trimmed so sign-in, which trims what's typed, can always find the user.
+  const username = typeof body.username === 'string' ? body.username.trim() : '';
+  const handle = typeof body.handle === 'string' ? body.handle.trim() : '';
+  const { phoneNumber } = body;
+  if (!username) {
     return c.json({ error: 'username is required' }, 400);
   }
-  if (typeof handle !== 'string' || !handle.trim()) {
+  if (!handle) {
     return c.json({ error: 'handle is required' }, 400);
   }
   if (typeof phoneNumber !== 'string' || !E164.test(phoneNumber)) {

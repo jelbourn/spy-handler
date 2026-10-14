@@ -1,6 +1,5 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-import { DatePipe } from '@angular/common';
 import { UserService } from '../../services/user.service';
 import { MissionService } from '../../services/mission.service';
 import type { GameSession } from '../../../../shared/models';
@@ -81,6 +80,14 @@ export class MissionHistoryComponent {
     }
 
     void this.loadHistory(user.id);
+    this.missionService.watchActiveSession(user.id);
+    inject(DestroyRef).onDestroy(() => this.missionService.stopWatching());
+  }
+
+  protected async signOut(): Promise<void> {
+    this.missionService.reset();
+    this.userService.signOut();
+    await this.router.navigate(['/']);
   }
 
   private async loadHistory(userId: number): Promise<void> {
@@ -91,6 +98,7 @@ export class MissionHistoryComponent {
       }
       const userSessions = await this.missionService.loadUserSessions(userId);
       this.sessions.set(userSessions);
+      this.missionService.setActiveSessionFrom(userSessions);
     } catch {
       this.sessions.set([]);
     } finally {

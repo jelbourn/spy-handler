@@ -28,6 +28,8 @@ export interface MissionScenario {
 
 /** How often the active mission is refreshed while its dashboard is open. */
 const POLL_MS = 2_000;
+/** How often other pages re-check whether the user has an active mission. */
+const WATCH_MS = 5_000;
 
 @Service()
 export class MissionService {
@@ -50,8 +52,12 @@ export class MissionService {
     return this.scenarios().find((scenario) => scenario.id === session?.gameTemplateId) ?? null;
   });
 
+  /** Set when the last refresh couldn't reach the server, cleared when one succeeds. */
+  readonly isOffline = signal(false);
+
   private readonly now = signal(Date.now());
   private pollIntervalId: ReturnType<typeof setInterval> | null = null;
+  private watchIntervalId: ReturnType<typeof setInterval> | null = null;
 
   /** Time since the active session started, until it ends. */
   readonly formattedElapsedTime = computed(() => {
@@ -81,7 +87,53 @@ export class MissionService {
   /** Finds the user's session that hasn't ended, if any. */
   async loadActiveSession(userId: number): Promise<void> {
     const sessions = await this.loadUserSessions(userId);
-    this.activeSession.set(sessions.find((session) => session.endTime === null) ?? null);
+    this.setActiveSession(sessions.find((session) => session.endTime === null) ?? null);
+  }
+
+  /**
+   * Sets the active session from a list of the user's sessions, so pages that already loaded them
+   * don't need another request.
+   */
+  setActiveSessionFrom(sessions: GameSession[]): void {
+    this.setActiveSession(sessions.find((session) => session.endTime === null) ?? null);
+  }
+
+  /**
+   * Re-checks the user's active session every few seconds, so pages without the dashboard's
+   * polling notice when a mission ends (or starts in another tab).
+   */
+  watchActiveSession(userId: number): void {
+    this.stopWatching();
+    this.watchIntervalId = setInterval(() => {
+      this.loadActiveSession(userId).then(
+        () => this.isOffline.set(false),
+        () => this.isOffline.set(true),
+      );
+    }, WATCH_MS);
+  }
+
+  stopWatching(): void {
+    if (this.watchIntervalId !== null) {
+      clearInterval(this.watchIntervalId);
+      this.watchIntervalId = null;
+    }
+  }
+
+  /** Forgets everything about the current user's missions, e.g. on sign-out. */
+  reset(): void {
+    this.stopPolling();
+    this.stopWatching();
+    this.activeSession.set(null);
+    this.sessionDetail.set(null);
+    this.isOffline.set(false);
+  }
+
+  private setActiveSession(session: GameSession | null): void {
+    this.activeSession.set(session);
+    // Don't show details from a different session (e.g. a previous user's).
+    if (this.sessionDetail()?.id !== session?.id) {
+      this.sessionDetail.set(null);
+    }
   }
 
   /** Loads all sessions for a user, newest first. */
@@ -110,17 +162,28 @@ export class MissionService {
     }
   }
 
-  /** Aborts the active session through `POST /api/sessions/:id/end`; it counts as a failure. */
+  /**
+   * Aborts the active session through `POST /api/sessions/:id/end`; it counts as a failure. If the
+   * server says the game already ended, the active session is reloaded instead of reporting an
+   * error.
+   */
   async endMission(): Promise<void> {
     const session = this.activeSession();
     if (!session) {
       return;
     }
     this.stopPolling();
-    const ended = await firstValueFrom(
-      this.http.post<GameSession>(`/api/sessions/${session.id}/end`, {}),
-    );
-    this.activeSession.set(ended);
+    try {
+      const ended = await firstValueFrom(
+        this.http.post<GameSession>(`/api/sessions/${session.id}/end`, {}),
+      );
+      this.activeSession.set(ended);
+    } catch (err: unknown) {
+      await this.loadActiveSession(session.userId).catch(() => undefined);
+      if (this.activeSession()?.id === session.id && this.isRunning()) {
+        throw new Error(apiErrorMessage(err, 'Could not abort mission.'));
+      }
+    }
   }
 
   /** Refreshes the active session's details every couple of seconds until it ends. */
@@ -142,9 +205,17 @@ export class MissionService {
     if (!session) {
       return;
     }
-    const detail = await firstValueFrom(
-      this.http.get<GameSessionDetail>(`/api/sessions/${session.id}`),
-    );
+    let detail: GameSessionDetail;
+    try {
+      detail = await firstValueFrom(
+        this.http.get<GameSessionDetail>(`/api/sessions/${session.id}`),
+      );
+    } catch {
+      // Keep polling: the server may just be restarting.
+      this.isOffline.set(true);
+      return;
+    }
+    this.isOffline.set(false);
     this.sessionDetail.set(detail);
     if (detail.endTime) {
       this.activeSession.set(detail);

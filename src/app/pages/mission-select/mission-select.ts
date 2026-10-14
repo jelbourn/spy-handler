@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import {
   MissionScenario,
@@ -62,6 +62,15 @@ export class MissionSelectComponent {
       this.missionService.loadScenarios(),
       this.missionService.loadActiveSession(user.id),
     ]).catch(() => this.errorMessage.set('Could not reach the dispatch office.'));
+    // Notice when the active mission ends, so the mission buttons unlock without a reload.
+    this.missionService.watchActiveSession(user.id);
+    inject(DestroyRef).onDestroy(() => this.missionService.stopWatching());
+  }
+
+  protected async signOut(): Promise<void> {
+    this.missionService.reset();
+    this.userService.signOut();
+    await this.router.navigate(['/']);
   }
 
   protected async launchMission(scenario: MissionScenario): Promise<void> {

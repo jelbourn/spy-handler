@@ -52,6 +52,9 @@ export function validateScenario(scenario: {
 }): void {
   const { decisionTree: tree, allowedFailures } = scenario;
   const problems: string[] = [];
+  if (scenario.npcs.length === 0) {
+    problems.push('it has no operatives, so nobody would ever call');
+  }
   for (const { name, stats } of scenario.npcs) {
     for (const [stat, value] of Object.entries(stats)) {
       if (!Number.isInteger(value) || value < 1 || value > 100) {

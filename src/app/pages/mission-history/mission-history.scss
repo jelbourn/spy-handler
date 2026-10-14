@@ -322,3 +322,15 @@
   letter-spacing: 0.04em;
 }
 
+
+/* The sign-out control is a button styled like the nav links. */
+.bureau-sub-nav button.nav-link {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}

@@ -3,11 +3,13 @@ import { Hono } from 'hono';
 import { logger } from 'hono/logger';
 import { config } from './config.ts';
 import { startScheduler } from './game/scheduler.ts';
+import { restrictPublicAccess } from './public-access.ts';
 import { gameService } from './routes/game-service.ts';
 import { webhooks } from './routes/webhooks.ts';
 
 const app = new Hono();
 app.use(logger());
+app.use(restrictPublicAccess);
 
 app.route('/api', gameService);
 app.route('/', webhooks);

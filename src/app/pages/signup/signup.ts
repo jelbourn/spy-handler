@@ -1,6 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { MissionService } from '../../services/mission.service';
 import { UserService } from '../../services/user.service';
 import { CreateUserRequest } from '../../../../shared/models';
 
@@ -13,6 +14,7 @@ import { CreateUserRequest } from '../../../../shared/models';
 export class SignupComponent {
   private readonly router = inject(Router);
   private readonly userService = inject(UserService);
+  private readonly missionService = inject(MissionService);
 
   protected readonly username = signal('');
   protected readonly handle = signal('');
@@ -41,6 +43,8 @@ export class SignupComponent {
 
     try {
       await this.userService.registerUser(userRequest);
+      // Drop any mission state from whoever was signed in before.
+      this.missionService.reset();
 
       // Navigate to mission requisition on success
       await this.router.navigate(['/missions']);

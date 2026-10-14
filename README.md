@@ -53,7 +53,7 @@ npm run start:fake  # Same, but with fake ElevenLabs and Twilio: no real calls
 - The UI can subscribe to live updates at `GET /api/events` (Server-Sent Events).
 - Webhooks from Twilio and ElevenLabs need a public URL. Run a tunnel (e.g.
   `tailscale funnel --bg 3000` or `ngrok http 3000`) and set `PUBLIC_URL` to the tunnel URL.
-  Requests through the tunnel can only reach `/elevenlabs/*` and `/twilio/*`; everything else
+  Requests through the tunnel can only reach `/elevenlabs/*`; everything else
   (including `/api/*`, which has no auth) returns 404 (`server/public-access.ts`).
 
 ## Operative calls

@@ -36,6 +36,10 @@
     </div>
   </header>
 
+  @if (isOffline()) {
+  <p class="error-banner" role="alert">! LINE TO DISPATCH LOST. RETRYING... (the server can't be reached)</p>
+  }
+
   <!-- Switchboard -->
   <section class="operative-switchboard">
     <div class="switchboard-header">

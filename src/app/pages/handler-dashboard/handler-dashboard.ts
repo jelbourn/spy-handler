@@ -34,6 +34,7 @@ export class HandlerDashboardComponent {
 
   protected readonly missionClock = this.missionService.formattedElapsedTime;
   protected readonly isRunning = this.missionService.isRunning;
+  protected readonly isOffline = this.missionService.isOffline;
   protected readonly missionCodename = computed(() => this.detail()?.title.toUpperCase() ?? '');
   protected readonly rawStatus = computed(() => this.detail()?.status ?? 'in-progress');
 
@@ -111,8 +112,9 @@ export class HandlerDashboardComponent {
       await this.router.navigate(['/']);
       return;
     }
-    if (!this.missionService.activeSession()) {
-      await this.missionService.loadActiveSession(user.id);
+    // Reload unless the service already holds this user's mission (not a previous user's).
+    if (this.missionService.activeSession()?.userId !== user.id) {
+      await this.missionService.loadActiveSession(user.id).catch(() => undefined);
     }
     if (!this.missionService.activeSession()) {
       await this.router.navigate(['/missions']);
@@ -126,8 +128,14 @@ export class HandlerDashboardComponent {
   }
 
   protected async endMission(): Promise<void> {
-    if (this.missionService.isRunning()) {
+    if (!this.missionService.isRunning()) {
+      return;
+    }
+    try {
       await this.missionService.endMission();
+    } catch (err: unknown) {
+      // The link has already navigated to the mission list, which shows the mission is still on.
+      console.error('Could not end the mission:', err);
     }
   }
 }

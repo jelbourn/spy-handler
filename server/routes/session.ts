@@ -19,6 +19,7 @@ import {
 import { getNode } from '../game/decision-tree.ts';
 import { FIRST_CALL_DELAY_MS } from '../game/calls.ts';
 import { endGameSession } from '../game/game-sessions.ts';
+import { hangUpCall } from '../twilio/client.ts';
 
 /** Lists all game sessions as `GameSession[]`, newest first. */
 export function listSessions(c: Context) {
@@ -165,14 +166,29 @@ function toCheckpoint(call: NpcCall, tree: DecisionTree): Checkpoint {
 }
 
 /**
- * Abandons an active session, which counts as a failure. The remaining operatives stop calling.
- * Responds with the ended `GameSession`, or 404 if there's no active session with that ID.
+ * Abandons an active session, which counts as a failure. The remaining operatives stop calling, and
+ * a call in progress is hung up. Responds with the ended `GameSession`, or 404 if there's no active
+ * session with that ID.
  */
 export function endSession(c: Context) {
   const id = Number(c.req.param('sessionId'));
   const session = endGameSession(id, 'failure');
   if (!session) {
     return c.json({ error: `No active session ${c.req.param('sessionId')}` }, 404);
+  }
+  // The post-call webhook still finishes the call record once the line drops.
+  const liveCalls = db
+    .select({ call: npcCalls })
+    .from(npcCalls)
+    .innerJoin(npcSessions, eq(npcCalls.npcSessionId, npcSessions.id))
+    .where(and(eq(npcSessions.gameSessionId, id), isNull(npcCalls.endTime)))
+    .all();
+  for (const { call } of liveCalls) {
+    if (call.callSid) {
+      hangUpCall(call.callSid).catch((error: unknown) => {
+        console.error(`Couldn't hang up call ${call.id} after aborting the game:`, error);
+      });
+    }
   }
   return c.json(session);
 }
