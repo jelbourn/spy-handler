@@ -1,20 +1,32 @@
 <div class="signup-content">
   <!-- Induction / Registration Form -->
   <form class="auth-form" (submit)="onSubmit($event)">
-    <!-- 1. Handler Codename -->
+    <!-- 1. Handler ID (username, for signing in) -->
     <div class="form-group">
-      <label for="handler-codename" class="form-label">1. DESIGNATED HANDLER CODENAME:</label>
+      <label for="handler-id" class="form-label">1. HANDLER ID (FOR SIGN-IN):</label>
       <div class="input-bracket-box">
         <span class="bracket" aria-hidden="true">[</span>
-        <input id="handler-codename" name="handlerName" type="text" class="typewriter-input" placeholder="e.g. FALCON-7"
-          [ngModel]="handlerName()" (ngModelChange)="handlerName.set($event)" autocomplete="nickname" required />
+        <input id="handler-id" name="username" type="text" class="typewriter-input" placeholder="e.g. jsmith"
+          [ngModel]="username()" (ngModelChange)="username.set($event)" autocomplete="username" required />
         <span class="bracket" aria-hidden="true">]</span>
       </div>
     </div>
 
-    <!-- 2. Physical Handset Telephone Number -->
+    <!-- 2. Handler Codename (handle, what operatives call you) -->
     <div class="form-group">
-      <label for="dispatch-phone" class="form-label">2. DIRECT DISPATCH FREQUENCY (PHONE NUMBER):</label>
+      <label for="handler-codename" class="form-label">2. DESIGNATED HANDLER CODENAME:</label>
+      <div class="input-bracket-box">
+        <span class="bracket" aria-hidden="true">[</span>
+        <input id="handler-codename" name="handle" type="text" class="typewriter-input" placeholder="e.g. FALCON-7"
+          [ngModel]="handle()" (ngModelChange)="handle.set($event)" autocomplete="nickname" required />
+        <span class="bracket" aria-hidden="true">]</span>
+      </div>
+      <p class="field-advisory">NOTICE: Operatives will address you by this codename on the line.</p>
+    </div>
+
+    <!-- 3. Physical Handset Telephone Number -->
+    <div class="form-group">
+      <label for="dispatch-phone" class="form-label">3. DIRECT DISPATCH FREQUENCY (PHONE NUMBER):</label>
       <div class="input-bracket-box">
         <span class="bracket" aria-hidden="true">[</span>
         <input id="dispatch-phone" name="phone" type="tel" class="typewriter-input" placeholder="+1 (555) 019-2834"
@@ -27,9 +39,9 @@
       </p>
     </div>
 
-    <!-- 3. Security Cipher Passcode -->
+    <!-- 4. Security Cipher Passcode -->
     <div class="form-group">
-      <label for="cipher-passcode" class="form-label">3. ASSIGN MASTER SECURITY CIPHER:</label>
+      <label for="cipher-passcode" class="form-label">4. ASSIGN MASTER SECURITY CIPHER:</label>
       <div class="input-bracket-box">
         <span class="bracket" aria-hidden="true">[</span>
         <input id="cipher-passcode" name="passcode" type="password" class="typewriter-input" placeholder="••••••••••••"

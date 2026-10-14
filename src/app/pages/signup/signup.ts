@@ -14,7 +14,8 @@ export class SignupComponent {
   private readonly router = inject(Router);
   private readonly userService = inject(UserService);
 
-  protected readonly handlerName = signal('');
+  protected readonly username = signal('');
+  protected readonly handle = signal('');
   protected readonly phone = signal('');
   protected readonly passcode = signal('');
 
@@ -25,11 +26,11 @@ export class SignupComponent {
     event.preventDefault();
     this.errorMessage.set(null);
 
-    const username = this.handlerName().trim();
+    const username = this.username().trim();
+    const handle = this.handle().trim();
     const phoneNumber = this.phone().trim();
-    const handle = this.handlerName().trim();
 
-    if (!username || !phoneNumber) {
+    if (!username || !handle || !phoneNumber) {
       this.errorMessage.set('All identification fields must be completed.');
       return;
     }
