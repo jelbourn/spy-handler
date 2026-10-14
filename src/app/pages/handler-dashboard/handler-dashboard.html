@@ -22,10 +22,12 @@
         <a routerLink="/history" class="dashboard-link">[ ARCHIVES (HISTORY) ]</a>
       </nav>
 
-      <!-- Abort Switch -->
+      <!-- Abort Switch (only while the mission is running) -->
+      @if (isRunning()) {
       <a routerLink="/missions" class="abort-switch" title="Emergency sever frequency" (click)="endMission()">
         <span class="switch-lever">■ END MISSION</span>
       </a>
+      }
     </div>
   </header>
 
@@ -88,7 +90,7 @@
         <div class="checkpoint-line">
           <span class="checkpoint-tag">
             @if (chk.status === 'cleared') {
-            [ ✓ CLEARED ]
+            [ ✓ SUCCESS ]
             } @else if (chk.status === 'failed') {
             [ ✗ FAILED ]
             } @else if (chk.status === 'active') {

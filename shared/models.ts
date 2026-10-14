@@ -201,18 +201,18 @@ export interface GameSessionDetail extends GameSession {
   checkpoints: Checkpoint[];
 }
 
-/**
- * A call as the player sees it on the mission timeline. A roll's result stays hidden (`pending`)
- * until the next call starts or the game ends, since the next briefing is what reveals it.
- */
+/** A call as the player sees it on the mission timeline. */
 export interface Checkpoint {
   callId: number;
   npcSessionId: number;
   /** The briefing the operative gave on this call. */
   situation: string;
-  /** `live` while the call is in progress. A call reporting the ending is `cleared` once over. */
-  status: 'live' | 'pending' | 'cleared' | 'failed';
-  /** The order and its roll, once revealed. */
+  /**
+   * `live` while the call is in progress, then the roll's result as soon as it ends. A call
+   * reporting the ending is `cleared` once over.
+   */
+  status: 'live' | 'cleared' | 'failed';
+  /** The order and its roll, once the call has ended. */
   decision: ChallengeRoll | null;
   startTime: string;
 }

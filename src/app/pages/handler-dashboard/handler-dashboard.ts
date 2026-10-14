@@ -33,6 +33,7 @@ export class HandlerDashboardComponent {
   private readonly detail = this.missionService.sessionDetail;
 
   protected readonly missionClock = this.missionService.formattedElapsedTime;
+  protected readonly isRunning = this.missionService.isRunning;
   protected readonly missionCodename = computed(() => this.detail()?.title.toUpperCase() ?? '');
   protected readonly missionStatus = computed(() => {
     switch (this.detail()?.status) {
@@ -131,14 +132,6 @@ function toStep(checkpoint: Checkpoint, number: number, operativeName: string): 
         title: `CHECKPOINT ${number} // ON THE LINE`,
         operativeName,
         status: 'active',
-        situation: checkpoint.situation,
-      };
-    case 'pending':
-      return {
-        id: String(checkpoint.callId),
-        title: `CHECKPOINT ${number} // ORDERS RECEIVED, AWAITING FIELD REPORT`,
-        operativeName,
-        status: 'pending',
         situation: checkpoint.situation,
       };
     default:

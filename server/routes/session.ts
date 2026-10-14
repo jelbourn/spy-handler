@@ -137,18 +137,12 @@ export function getSessionDetail(c: Context) {
       dossier: { name: npc.name, bio: npc.persona, stats: npc.stats },
       npcSession,
     })),
-    checkpoints: calls.map((call, i) =>
-      toCheckpoint(call, template.decisionTree, session.endTime !== null || i < calls.length - 1),
-    ),
+    checkpoints: calls.map((call) => toCheckpoint(call, template.decisionTree)),
   };
   return c.json(detail);
 }
 
-/**
- * @param revealed Whether the roll's result can be shown: once a later call has started (its
- *     briefing reveals it) or the game has ended.
- */
-function toCheckpoint(call: NpcCall, tree: DecisionTree, revealed: boolean): Checkpoint {
+function toCheckpoint(call: NpcCall, tree: DecisionTree): Checkpoint {
   const node = getNode(tree, call.nodeId);
   const base = {
     callId: call.id,
@@ -162,9 +156,6 @@ function toCheckpoint(call: NpcCall, tree: DecisionTree, revealed: boolean): Che
   if (!call.decision) {
     // Only a call reporting the ending finishes without a decision.
     return { ...base, status: 'cleared', decision: null };
-  }
-  if (!revealed) {
-    return { ...base, status: 'pending', decision: null };
   }
   return {
     ...base,

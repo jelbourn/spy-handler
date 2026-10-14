@@ -498,6 +498,11 @@
   &.cleared {
     background-color: #ede7d5;
     opacity: 0.85;
+    border-left: 4px solid #276b3d;
+
+    .checkpoint-tag {
+      color: #276b3d;
+    }
 
     .checkpoint-desc {
       text-decoration: line-through;
