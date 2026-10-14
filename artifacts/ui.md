@@ -1,8 +1,33 @@
 # Overview
 Designing an application for a agentic ai spy handler game. The purpose of the game is for players to act as a "spy handler" that recieves phone calls from "operators". The operators will describe actions they can complete but need your guidance. The phone calls will go to handsets in the real world.
 
-## Style Notes
-1960s Cold War intelligence dossier and teletype dispatch. Manila folder cream background, carbon-ribbon typewriter typography, bold red rubber ink stamps ('TOP SECRET / EYES ONLY'), high-contrast classified filing document aesthetic. Mechanical tactile toggles and stamped label buttons instead of modern glassmorphism.
+## Style & Design System (For Google Stitch)
+1960s Cold War intelligence dossier and teletype dispatch. High-contrast classified filing document aesthetic. Mechanical tactile toggles, pilot lamps, and stamped label buttons instead of modern glassmorphism.
+
+### Design Tokens & Color Palette
+* **Surfaces & Backgrounds:**
+  * Desk / Outer Canvas: Institutional olive-slate desk surface (`#2E3430` / `#222824`)
+  * Document Paper: Aged manila folder buff (`#F2E8D5` / `#E9DCBF`)
+  * Sub-documents / Index Cards: Crisp bleached typewriter stock (`#FAF6EE`)
+* **Inks & Typography:**
+  * Carbon Ink: Rich typewriter carbon black (`#161616`)
+  * Mimeograph Ink: Faded administrative slate navy (`#333D45`)
+  * Primary Display Font: Uppercase bold condensed mid-century grotesque (`font-sans tracking-wider uppercase font-black`)
+  * Body & Data Font: Mechanical typewriter monospace (`font-mono tracking-tight`)
+* **Accents & Telemetry:**
+  * Classification Crimson: Inked rubber stamp red (`#BA2D27`)
+  * Field Approval Green: Stamped forest green (`#276B3D`)
+  * Pilot Lamps: Amber (`#F59E0B`), Ruby Red (`#DC2626`), Signal Green (`#16A34A`) with warm tungsten center point and chrome knurled bezels.
+  * Dymo Tape Buttons: Matte black or crimson vinyl strip with crisp, slightly misaligned raised white embossed sans-serif lettering and hard mechanical offset shadows (`shadow-[2px_2px_0px_#000]`).
+* **Borders & Shadows:**
+  * Sharp 1px to 2px solid dark borders (`border border-stone-800`).
+  * Hard physical drop shadows only (`shadow-[3px_3px_0px_rgba(0,0,0,0.65)]`); NO diffuse soft blurs.
+
+### Negative Constraints (Strictly Avoid in Stitch Generations)
+* **NO Modern Glassmorphism:** Never use `backdrop-blur`, translucent glass layers, or floating glow pills.
+* **NO Smooth Rounded Corners:** Avoid `rounded-xl`, `rounded-2xl`, and `rounded-full` (except circular pilot lamps and rubber stamps). Buttons and containers must use `rounded-none` or `rounded-xs`.
+* **NO Soft Gradients or Neon Highlights:** Stick to flat matte paper, heavy mechanical textures, and carbon ink bleed.
+* **NO Modern SaaS Icons:** Use literal period-accurate glyphs, stamped text tags, metal paperclips, or brackets (`[ + ]`, `[ • ]`, `[ X ]`) instead of minimalist line-art icon libraries.
 
 ## Pages
 
@@ -56,40 +81,93 @@ Styled as an olive-drab metal filing cabinet drawer viewed from above, containin
 * **Routing:** Authorizing a mission sends a request to the backend, schedules the real-world telephone calls, and opens the Active Mission Page.
 
 ### Active Mission Page
-The handler's real-time war room console during live operations, wired to real-world phone calls and live SSE event updates.
-* **Mission Header & Emergency Controls:**
-  * Top Bureau Banner: `OPERATION: [CODENAME] // LIVE FREQUENCY ACTIVE`
-  * Mechanical elapsed mission timer styled as vintage nixie tubes or a flip-clock counter.
-  * **Emergency Abort Switch:** Red industrial toggle switch beneath a flip-up transparent safety guard: `[ ABANDON MISSION // SEVER ALL LINES ]` (triggers session end).
-* **Top Operative Badge Bar:**
-  * A horizontal row of official Bureau security badges pinned along the top margin.
-  * **Badge Card Anatomy:**
+The handler's live war room console during active operations, synchronized with physical telephone handset calls and real-time Server-Sent Events (SSE).
+
+* **Bureau Status Header & Emergency Controls:**
+  * Bureau Title: `OPERATOR MANAGEMENT BUREAU // ACTIVE OPERATIONS FREQUENCY`
+  * Mechanical Nixie-tube or mechanical flip-counter mission clock tracking total operation elapsed time.
+  * **Emergency Abort Switch:** Industrial red mechanical toggle switch protected under a flip-up transparent acrylic safety hood: `[ EMERGENCY ABORT // SEVER FREQUENCY ]` (calls backend `/sessions/:sessionId/end`).
+
+* **Top Operative Badge Switchboard:**
+  * Horizontal row of heavy cardstock ID badges pinned along the top of the desk.
+  * **Badge Anatomy:**
     * Black-and-white passport mugshot of the operative.
-    * Stencil operative codename (e.g., `OPERATIVE: FALCON`).
-    * Jeweled pilot lamp displaying real-time telephony status:
-      * *Flashing Amber/Red:* `DIALING HANDLER HANDSET...`
-      * *Steady Green:* `ON SECURE LINE (CALL IN PROGRESS)`
-      * *Dim Amber:* `EN ROUTE / BETWEEN CHECKPOINTS`
-      * *Static Stamp:* `CHECKPOINT SECURED` or `M.I.A. / COMPROMISED`
-    * Click interaction: Clicking any badge opens the **Agent Detail Dossier Pop-Up**.
-* **Agent Detail Dossier Pop-Up (Modal):**
-  * Pinned manila personnel file (`FORM OMB-88: OPERATIVE EVALUATION`) overlaid with paperclip and brass brad graphics.
+    * Stencil codename (e.g., `OPERATIVE: FALCON`).
+    * Faceted jewel pilot lamp indicating status:
+      * *Flashing Red/Amber:* Incoming ring to handler's real-world handset.
+      * *Steady Green:* Active call in progress (audio cipher connected).
+      * *Dim Amber:* Operative en route between checkpoints.
+      * *Red Rubber Stamp:* M.I.A. / Compromised or Cleared.
+    * Interaction: Clicking any badge opens the **Agent Detail Dossier Pop-Up**.
+
+* **Live Call Transmission Pop-Up (Active Line HUD):**
+  * Appears prominently when a call is answered on the physical handset:
+    * Displays the speaking operative's badge and codename.
+    * Glowing green pilot lamp: `SECURE AUDIO ENCRYPTED // CALL TIME: [MM:SS]`.
+    * Analog needle-deflecting **VU Meter** in a brushed-metal bezel, vibrating to simulate audio transmission feedback over the telephone line.
+    * Subtle background static / telephone line frequency hum graphic.
+
+* **Agent Detail Dossier Pop-Up (Modal on Badge Click):**
+  * Manila personnel file folder (`FORM OMB-88: OPERATIVE EVALUATION`) with brass brads and paperclip graphics.
   * **Contents:**
-    * Full operative portrait, clearance tier, and redacted biological identity (`NAME: ████████`).
-    * **Operational Strengths:** Typewriter itemized list (e.g., `+ Master Locksmith & Safe Infiltration`, `+ Fluent in Russian/German`, `+ Cool under interrogation`).
-    * **Known Vulnerabilities / Weaknesses:** Typewriter warning section flagged with red stamped exclamation marks (e.g., `! Reckless under artillery fire`, `! Chronic disregard for extraction protocol`).
-    * Close trigger: Stamped wooden ink mark `[ RETURN TO OPERATIONS DESK ]`.
-* **Objective & Checkpoint Timeline (Main Workspace):**
-  * Visualized as a ruled teletype dispatch roll or linked index-card chain across the desk surface representing mission milestones:
-    * **Objectives (High-Level Milestones):** Heavy tabbed folder headers.
-    * **Checkpoints (Operational Steps):**
-      * *Cleared Checkpoints:* Stamped with rubber ink `[ CHECKPOINT CLEARED // HH:MM:SS ]` with typewriter strikethroughs.
-      * *Current Active Checkpoint:* Circled with red grease pencil / amber glow highlighting the exact situation the operative is phoning about.
-      * *Subsequent Checkpoints:* Masked with classified redaction bars (`CLASSIFIED // PENDING FIELD PROGRESS`) to keep decision trees confidential until unlocked.
-* **Live Teletype Event Stream:**
-  * Continuous feed along the bottom margin rendering live Server-Sent Events (SSE) as real-world telephone calls connect, decisions are ratified, or status changes occur.
+    * Operative portrait, clearance grade, and redacted civilian name (`NAME: ████████`).
+    * **Operational Strengths:** Typewriter bulleted traits (e.g., `+ Master Locksmith & Safe Infiltration`, `+ Fluent in German/Russian`, `+ Calm under surveillance`).
+    * **Known Vulnerabilities / Weaknesses:** Typewriter warning section with red ink flags (e.g., `! Impulsive in fire fights`, `! Susceptible to blackmail concerning family`).
+    * Close button: Stamped wooden ink mark: `[ RETURN TO OPERATIONS DESK ]`.
+
+* **Unified Mission Objective & Checkpoint Timeline:**
+  * Single chronological mission progression track shared across all operatives, displayed as a stamped bureaucratic docket across the desk surface:
+    * **Objectives (Major Phases):** Heavy manila folder tabs dividing mission chapters (e.g., `PHASE 1: EMBASSY INFILTRATION`).
+    * **Checkpoint Cards (Operational Steps):**
+      * Operative Assignment Tag: Stamped mini-badge showing which operative is assigned to this specific checkpoint.
+      * *Cleared Checkpoints:* Stamped with angled green rubber ink `[ SECURED // HH:MM:SS ]` with single strikethrough lines.
+      * *Active Live Checkpoint:* Circled with red wax pencil, pulsing amber jewel light, displaying the real-time crisis or decision facing the operative currently on the telephone line.
+      * *Pending Checkpoints:* Blacked out with classified marker bars (`CLASSIFIED // LEVEL 4`) to preserve decision suspense.
+    * **Toggleable Handler Intel Drawer:**
+      * Each checkpoint card features a tactile metal switch or tab: `[ FLIP FOR INTERCEPT INTEL / CLUES ]`.
+      * Toggling reveals hand-scribbled handler margin notes, intercepted radio frequencies, blueprints, or guard rotation timetables to assist the player during their voice decision.
+
+* **Live Teletype Dispatch Stream (Bottom Ribbon):**
+  * Continuous teletype ribbon roll along the bottom edge, outputting real-time Server-Sent Events (SSE) timestamps:
+    * `11:14:02 - OMB DISPATCH: LINE CONNECTED TO OPERATIVE FALCON`
+    * `11:15:30 - CHECKPOINT 1 CLEARED: PERIMETER BREACH VERIFIED`
 
 ### Mission History
-Shows a list of past missions, clicking on a mission leads you to the mission history detail page
+Styled as an opened, wide hardbound government ledger book resting on an institutional desk surface (`FORM OMB-99: MASTER REGISTRY OF COVERT ENGAGEMENTS`).
+* **Persistent Bureau Header:**
+  * Bureau Title: `OPERATOR MANAGEMENT BUREAU // CENTRAL ARCHIVAL DIVISION`
+  * Navigation Tabs: `[ REQUISITION OPERATION (NEW) ]`, `[ ARCHIVAL LEDGER (ACTIVE) ]`, `[ SEVER LINE (LOGOUT) ]`
+* **Ledger Book Container:**
+  * Heavy canvas-bound book spine and aged cream paper with faint blue/red vertical accounting ruling lines.
+  * Official bureau seal ink mark in the top margin with stamped archival volume: `VOLUME IV // CLASSIFIED OPERATIONS REGISTRY`.
+* **Ledger Entries (Columns):**
+  * **DATE ATTEMPTED:** Cold War typewriter date stamp format (e.g., `14 OCT 1964 // 21:40 HRS`).
+  * **MISSION NAME:** Bold monospace typewriter font (e.g., `OPERATION: COLD BREEZE`).
+  * **OUTCOME:** Inked rubber stamps slightly misaligned across the entry:
+    * Bold Green Ink: `[ ACCOMPLISHED // OBJECTIVE SECURED ]`
+    * Crimson Ink: `[ COMPROMISED // ASSETS LOST ]`
+    * Carbon Black Ink: `[ ABORTED // LINE SEVERED BY HANDLER ]`
+* **Interaction & Routing:**
+  * Hovering an entry casts a soft yellow grease-pencil highlight line across the ledger row.
+  * Clicking any entry navigates the handler to the **Mission History Detail** page for that specific operation.
 
 ### Mission History Detail
+Styled as an opened classified "AFTER-ACTION DEBRIEFING & INVESTIGATION REPORT" (`FORM OMB-701-A`) dossier folder spread open across a briefing desk.
+* **Header & Official Ruling:**
+  * Bureau Title: `OPERATOR MANAGEMENT BUREAU // POST-OPERATION INQUIRY DIVISION`
+  * Operation Codename & Date: `CASE FILE: OPERATION [CODENAME] // RECORDED [DATE]`
+  * Bold diagonal rubber ink stamp across the report header: `DECLASSIFIED FOR INTERNAL INQUIRY // CASE CLOSED`.
+  * **Bureau Performance Assessment:** Stamped rating box (e.g., `OFFICIAL EVALUATION: MERITORIOUS FIELD GUIDANCE` or `OFFICIAL EVALUATION: CRITICAL ASSET LOSS // REPRIMAND`).
+* **Operative Fate & Status Roster:**
+  * Pinned passport badges of all participating field operatives with stamped post-action status overlays:
+    * `EXTRACTED SAFELY TO BERLIN SECTOR` (Green stamp)
+    * `APPREHENDED BY HOSTILE COUNTER-INTEL` (Red stamp)
+    * `RADIO CONTACT SEVERED / M.I.A.` (Black stamp)
+* **Sequential Checkpoint & Directive Transcript:**
+  * Chronological typewriter breakdown of the operation timeline:
+    * **Checkpoint Step:** Location and situation encountered.
+    * **Handler Directives:** Logged instruction provided by the handler during the physical phone call.
+    * **Operational Outcome:** Resulting field development and timing metrics.
+* **Navigation Actions:**
+  * Primary Action: Embossed black Dymo tape button: `[ RETURN TO MASTER ARCHIVAL LEDGER ]` -> routes back to Mission History.
+  * Secondary Action: Manila tab button: `[ REQUISITION NEW OPERATION ]` -> routes to New Mission Page.

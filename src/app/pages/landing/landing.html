@@ -1,0 +1,41 @@
+<div class="landing-content">
+  <!-- Authentication Form -->
+  <form class="auth-form" (submit)="onSubmit($event)">
+    <!-- Email Field -->
+    <div class="form-group">
+      <label for="handler-id" class="form-label">1. HANDLER ID (EMAIL):</label>
+      <div class="input-bracket-box">
+        <span class="bracket" aria-hidden="true">[</span>
+        <input id="handler-id" name="email" type="email" class="typewriter-input" [ngModel]="email()"
+          (ngModelChange)="email.set($event)" autocomplete="username" required />
+        <span class="bracket" aria-hidden="true">]</span>
+      </div>
+    </div>
+
+    <!-- Passcode Field -->
+    <div class="form-group">
+      <label for="cipher-passcode" class="form-label">2. CIPHER PASSCODE:</label>
+      <div class="input-bracket-box">
+        <span class="bracket" aria-hidden="true">[</span>
+        <input id="cipher-passcode" name="passcode" type="password" class="typewriter-input" [ngModel]="passcode()"
+          (ngModelChange)="passcode.set($event)" autocomplete="current-password" required />
+        <span class="bracket" aria-hidden="true">]</span>
+      </div>
+    </div>
+    <!-- Submit Button -->
+    <button type="submit" class="dymo-button">
+      <span class="button-pip" aria-hidden="true">■</span>
+      <span class="button-text">[ AUTHENTICATE CLEARANCE ]</span>
+      <span class="button-pip" aria-hidden="true">■</span>
+    </button>
+  </form>
+
+  <hr class="inner-divider" />
+
+  <!-- Navigation Link -->
+  <nav class="dossier-footer">
+    <a routerLink="/sign-up" class="typewriter-link">
+      UNREGISTERED AGENT? SIGN-UP
+    </a>
+  </nav>
+</div>

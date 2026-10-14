@@ -1,0 +1,96 @@
+<div class="signup-content">
+  <!-- Induction / Registration Form -->
+  <form class="auth-form" (submit)="onSubmit($event)">
+    <!-- 1. Handler Codename -->
+    <div class="form-group">
+      <label for="handler-codename" class="form-label">1. DESIGNATED HANDLER CODENAME:</label>
+      <div class="input-bracket-box">
+        <span class="bracket" aria-hidden="true">[</span>
+        <input
+          id="handler-codename"
+          name="handlerName"
+          type="text"
+          class="typewriter-input"
+          placeholder="e.g. FALCON-7"
+          [ngModel]="handlerName()"
+          (ngModelChange)="handlerName.set($event)"
+          autocomplete="nickname"
+          required
+        />
+        <span class="bracket" aria-hidden="true">]</span>
+      </div>
+    </div>
+
+    <!-- 2. Physical Handset Telephone Number -->
+    <div class="form-group">
+      <label for="dispatch-phone" class="form-label">2. DIRECT DISPATCH FREQUENCY (PHONE NUMBER):</label>
+      <div class="input-bracket-box">
+        <span class="bracket" aria-hidden="true">[</span>
+        <input
+          id="dispatch-phone"
+          name="phone"
+          type="tel"
+          class="typewriter-input"
+          placeholder="+1 (555) 019-2834"
+          [ngModel]="phone()"
+          (ngModelChange)="phone.set($event)"
+          autocomplete="tel"
+          required
+        />
+        <span class="bracket" aria-hidden="true">]</span>
+      </div>
+      <p class="field-advisory">
+        NOTICE: Operatives will dial this physical telephone handset directly during live operations. Ensure E.164 formatting.
+      </p>
+    </div>
+
+    <!-- 3. Security Cipher Passcode -->
+    <div class="form-group">
+      <label for="cipher-passcode" class="form-label">3. ASSIGN MASTER SECURITY CIPHER:</label>
+      <div class="input-bracket-box">
+        <span class="bracket" aria-hidden="true">[</span>
+        <input
+          id="cipher-passcode"
+          name="passcode"
+          type="password"
+          class="typewriter-input"
+          placeholder="••••••••••••"
+          [ngModel]="passcode()"
+          (ngModelChange)="passcode.set($event)"
+          autocomplete="new-password"
+          required
+        />
+        <span class="bracket" aria-hidden="true">]</span>
+      </div>
+    </div>
+
+    @if (errorMessage()) {
+      <div class="error-banner" role="alert">
+        <span class="error-pip">!</span> {{ errorMessage() }}
+      </div>
+    }
+
+    <!-- Submit Button (Crimson Dymo Tape) -->
+    <button
+      type="submit"
+      class="dymo-button dymo-button-crimson"
+      [disabled]="isSubmitting()"
+    >
+      <span class="button-pip" aria-hidden="true">■</span>
+      <span class="button-text">
+        {{ isSubmitting() ? '[ ENROLLING HANDLER... ]' : '[ RATIFY ENROLLMENT & COMMISSION ]' }}
+      </span>
+      <span class="button-pip" aria-hidden="true">■</span>
+    </button>
+  </form>
+
+  <hr class="inner-divider" />
+
+  <!-- Navigation Link -->
+  <nav class="dossier-footer">
+    <a routerLink="/" class="typewriter-link">
+      ALREADY COMMISSIONED? RETURN TO CHECKPOINT (SIGN-IN)
+    </a>
+  </nav>
+</div>
+

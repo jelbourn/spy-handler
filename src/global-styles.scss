@@ -1,1 +1,17 @@
-/* You can add global styles to this file, and also import other style files */
+/* 1960s Bureau Typography */
+@import url('https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Oswald:wght@600;700&family=Special+Elite&display=swap');
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  width: 100%;
+  background-color: #1f2723;
+  color: #161616;
+  font-family: 'Courier Prime', monospace;
+  -webkit-font-smoothing: antialiased;
+}

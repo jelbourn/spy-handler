@@ -1,1 +1,44 @@
-<h1>SpyHandler</h1>
+<main class="desk-surface">
+  <div class="card-wrapper">
+    <!-- Top Clearance Tab -->
+    <header class="clearance-tab" aria-label="Security Clearance Header">
+      <span class="tab-pip" aria-hidden="true">■</span>
+      <span class="tab-text">CLEARANCE: LEVEL 4 &nbsp;|&nbsp; SEC-ORD // 62-0941</span>
+    </header>
+
+    <!-- Main Dossier Card Shell -->
+    <article class="dossier-card">
+      <!-- Watermark Compass Seal -->
+      <svg class="watermark-seal" viewBox="0 0 400 400" aria-hidden="true">
+        <circle cx="200" cy="200" r="180" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="6,4"/>
+        <circle cx="200" cy="200" r="145" fill="none" stroke="currentColor" stroke-width="1.5"/>
+        <polygon points="200,30 216,184 370,200 216,216 200,370 184,216 30,200 184,184" fill="currentColor" fill-opacity="0.85"/>
+        <circle cx="200" cy="200" r="16" fill="none" stroke="currentColor" stroke-width="2"/>
+        <text x="200" y="70" text-anchor="middle" font-size="14" font-family="'Courier Prime', monospace" letter-spacing="4" fill="currentColor">OPERATOR MANAGEMENT BUREAU</text>
+        <text x="200" y="345" text-anchor="middle" font-size="13" font-family="'Courier Prime', monospace" letter-spacing="6" fill="currentColor">★ 1962 ★ CLASSIFIED</text>
+      </svg>
+
+      <!-- Red Rubber Stamp -->
+      <aside class="rubber-stamp" aria-label="Classification: Classified, Eyes Only">
+        <span class="stamp-title">CLASSIFIED // EYES ONLY</span>
+        <span class="stamp-sub">RESTRICTED DISTRIBUTION</span>
+      </aside>
+
+      <!-- Department Identification Header -->
+      <div class="dept-header">
+        <p class="dept-sub">DEPT. OF SPECIAL LOGISTICS / DOC-CAT 88-ALPHA</p>
+        <h1 class="agency-title">OPERATOR MANAGEMENT<br>BUREAU</h1>
+        <p class="doc-code">FORM OMB-101 // SECURE HANDLER ACCESS GATEWAY</p>
+      </div>
+
+      <hr class="divider-line" />
+
+      <!-- Page Content Outlet -->
+      <div class="page-content-outlet">
+        <router-outlet />
+      </div>
+
+      <div class="card-bottom-groove" aria-hidden="true"></div>
+    </article>
+  </div>
+</main>

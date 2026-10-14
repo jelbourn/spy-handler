@@ -1,0 +1,158 @@
+:host {
+  display: block;
+  min-height: 100vh;
+}
+
+.desk-surface {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 3rem 1.5rem;
+  background-color: #1f2723;
+  background-image: 
+    radial-gradient(ellipse at 50% 40%, rgba(45, 58, 52, 0.6) 0%, rgba(20, 27, 23, 0.95) 100%);
+}
+
+.card-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 1080px;
+}
+
+/* Top Tab */
+.clearance-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: #f6eedb;
+  color: #111;
+  padding: 0.4rem 1rem;
+  font-family: 'Courier Prime', monospace;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  border-top: 2px solid #1a1a1a;
+  border-left: 2px solid #1a1a1a;
+  border-right: 2px solid #1a1a1a;
+  box-shadow: 2px -2px 0px rgba(0, 0, 0, 0.35);
+  margin-left: 1.5rem;
+}
+
+.tab-pip {
+  color: #ba2d27;
+  font-size: 0.85rem;
+  line-height: 1;
+}
+
+/* Main Dossier Card */
+.dossier-card {
+  position: relative;
+  background-color: #ece3cd;
+  border: 2px solid #1a1a1a;
+  box-shadow: 
+    8px 8px 0px rgba(0, 0, 0, 0.55),
+    16px 16px 24px rgba(0, 0, 0, 0.35);
+  padding: 2.75rem 3rem 2.25rem;
+  overflow: hidden;
+}
+
+/* Watermark Seal */
+.watermark-seal {
+  position: absolute;
+  top: 15px;
+  right: -30px;
+  width: 380px;
+  height: 380px;
+  color: #2b3935;
+  opacity: 0.12;
+  pointer-events: none;
+  transform: rotate(-12deg);
+}
+
+/* Red Rubber Stamp */
+.rubber-stamp {
+  position: absolute;
+  top: 2.25rem;
+  right: 2rem;
+  border: 2px solid #ba2d27;
+  padding: 0.35rem 0.75rem;
+  transform: rotate(4deg);
+  color: #ba2d27;
+  font-family: 'Special Elite', 'Courier Prime', monospace;
+  text-align: center;
+  background-color: rgba(236, 227, 205, 0.65);
+  box-shadow: inset 0 0 4px rgba(186, 45, 39, 0.2);
+  z-index: 2;
+
+  .stamp-title {
+    display: block;
+    font-size: 1.15rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    line-height: 1.1;
+  }
+
+  .stamp-sub {
+    display: block;
+    font-size: 0.68rem;
+    letter-spacing: 0.14em;
+    font-weight: 700;
+    margin-top: 0.2rem;
+  }
+}
+
+/* Department Header */
+.dept-header {
+  position: relative;
+  z-index: 1;
+
+  .dept-sub {
+    font-family: 'Courier Prime', monospace;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    color: #2c333a;
+    margin-bottom: 0.5rem;
+  }
+
+  .agency-title {
+    font-family: 'Oswald', sans-serif;
+    font-size: 2.75rem;
+    font-weight: 700;
+    line-height: 1.05;
+    letter-spacing: 0.03em;
+    color: #121212;
+    text-transform: uppercase;
+    margin-bottom: 0.6rem;
+  }
+
+  .doc-code {
+    font-family: 'Courier Prime', monospace;
+    font-size: 0.82rem;
+    letter-spacing: 0.04em;
+    color: #2c333a;
+  }
+}
+
+.divider-line {
+  border: none;
+  border-top: 2px solid #8e8a7f;
+  margin: 1.5rem 0;
+}
+
+/* Page Content Outlet Container: Child content centered by default */
+.page-content-outlet {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.card-bottom-groove {
+  height: 6px;
+  background-color: #928e83;
+  border-top: 1px solid #757166;
+  margin-top: 2rem;
+}
