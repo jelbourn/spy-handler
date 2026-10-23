@@ -1,6 +1,6 @@
 # SpyHandler
 
-This is a prototype, demo type of application, not serious production code.
+This is a prototype, demo type of application, not serious production code. It was built for an episode of [Web Dev Challenge](https://codetv.dev/series/web-dev-challenge)
 
 This app is a game where the user plays the role of Handler for a team of covert operatives. The
 operatives are very needy, though, and need to keep calling their handler (the player) for
